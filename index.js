@@ -52,14 +52,14 @@ app.get('/login', (req, res) => {
 
 // Cadastro de novo usuário (aguarda aprovação do admin)
 app.post('/register', (req, res) => {
-    const { nome, email, senha } = req.body;
+    const { nome, email, senha, lojas } = req.body; // lojas deve ser um array de ids
     if (!nome || !email || !senha) {
         return res.status(400).json({ error: 'Preencha todos os campos.' });
     }
     const hash = bcrypt.hashSync(senha, 10);
     db.query(
-        'INSERT INTO usuario (nome, email, senha, loja, ativo) VALUES (?, ?, ?, ?, ?)',
-        [nome, email, hash, 'Loja Principal', false],
+        'INSERT INTO usuario (nome, email, senha, ativo) VALUES (?, ?, ?, ?)',
+        [nome, email, hash, false],
         (err, result) => {
             if (err) {
                 if (err.code === 'ER_DUP_ENTRY') {
@@ -67,7 +67,16 @@ app.post('/register', (req, res) => {
                 }
                 return res.status(500).json({ error: 'Erro ao cadastrar usuário.' });
             }
-            res.status(201).json({ success: true, message: 'Cadastro realizado! Aguarde aprovação do administrador.' });
+            const userId = result.insertId;
+            if (lojas && lojas.length > 0) {
+                const values = lojas.map(loja_id => [userId, loja_id]);
+                db.query('INSERT INTO usuario_loja (usuario_id, loja_id) VALUES ?', [values], (err2) => {
+                    if (err2) return res.status(500).json({ error: 'Erro ao cadastrar lojas.' });
+                    res.status(201).json({ success: true, message: 'Cadastro realizado! Aguarde aprovação do administrador.' });
+                });
+            } else {
+                res.status(201).json({ success: true, message: 'Cadastro realizado! Aguarde aprovação do administrador.' });
+            }
         }
     );
 });
@@ -120,16 +129,19 @@ app.post('/login', (req, res) => {
 // 1. Listar usuários pendentes (ativo = FALSE)
 app.get('/admin/usuarios/pendentes', (req, res) => {
     db.query(
-        `SELECT u.id, u.nome, u.email, u.nivel_acesso, u.ativo,
-                GROUP_CONCAT(l.nome) AS lojas
+        `SELECT u.id, u.nome, u.email, u.nivel_acesso, u.ativo, 
+                GROUP_CONCAT(ul.loja_id) as lojas
          FROM usuario u
          LEFT JOIN usuario_loja ul ON u.id = ul.usuario_id
-         LEFT JOIN loja l ON ul.loja_id = l.id
          WHERE u.ativo = FALSE
          GROUP BY u.id`,
         (err, results) => {
-            if (err) return res.status(500).json({ error: 'Erro ao buscar usuários.' });
-            res.json(results);
+            if (err) return res.status(500).json([]);
+            const usuarios = results.map(u => ({
+                ...u,
+                lojas: u.lojas ? u.lojas.split(',').map(Number) : []
+            }));
+            res.json(usuarios);
         }
     );
 });

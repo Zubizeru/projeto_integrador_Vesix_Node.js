@@ -257,46 +257,47 @@ function carregarSolicitacoes() {
                 { id: 3, nome: 'Loja 2' }
             ];
             tabela.innerHTML = `
-                <div class="solicitacoes-lista">
-                    <div class="solicitacoes-header">
-                        <span>Nome</span>
-                        <span>Email</span>
-                        <span>Nível</span>
-                        <span>Lojas</span>
-                        <span>Ações</span>
+    <div class="solicitacoes-lista">
+        <div class="solicitacoes-header">
+            <span>Nome</span>
+            <span>Email</span>
+            <span>Nível</span>
+            <span>Lojas</span>
+            <span>Ações</span>
+        </div>
+        ${usuarios.map(u => {
+                const lojasUsuario = u.lojas || [];
+                const isAdmin = u.nivel_acesso === 'admin';
+                return `
+                <div class="solicitacao-item">
+                    <span class="solicitacao-nome">${u.nome}</span>
+                    <span class="solicitacao-email">${u.email}</span>
+                    <span>
+                        <select data-id="${u.id}" class="nivel-acesso">
+                            <option value="usuario" ${u.nivel_acesso === 'usuario' ? 'selected' : ''}>Usuário</option>
+                            <option value="gerente" ${u.nivel_acesso === 'gerente' ? 'selected' : ''}>Gerente</option>
+                            <option value="admin" ${u.nivel_acesso === 'admin' ? 'selected' : ''}>Admin</option>
+                        </select>
+                    </span>
+                    <span class="lojas-checkbox-group" data-id="${u.id}">
+                        ${lojasFixas.map(loja => `
+                            <label style="margin-right:10px;">
+                                <input type="checkbox" value="${loja.id}"
+                                    ${(isAdmin ? 'checked disabled' : (lojasUsuario.includes(loja.id) ? 'checked' : ''))}
+                                    class="loja-checkbox" data-id="${u.id}">
+                                ${loja.nome}
+                            </label>
+                        `).join('')}
+                    </span>
+                    <div class="btn-acoes">
+                        <button class="aprovar-btn" data-id="${u.id}">Aprovar</button>
+                        <button class="dispensar-btn" data-id="${u.id}">Dispensar</button>
                     </div>
-                    ${usuarios.map(u => {
-                        const lojasUsuario = (u.lojas || '').split(',').map(s => s.trim());
-                        const isAdmin = u.nivel_acesso === 'admin';
-                        return `
-                        <div class="solicitacao-item">
-                            <span class="solicitacao-nome">${u.nome}</span>
-                            <span class="solicitacao-email">${u.email}</span>
-                            <span>
-                                <select data-id="${u.id}" class="nivel-acesso">
-                                    <option value="usuario" ${u.nivel_acesso === 'usuario' ? 'selected' : ''}>Usuário</option>
-                                    <option value="gerente" ${u.nivel_acesso === 'gerente' ? 'selected' : ''}>Gerente</option>
-                                    <option value="admin" ${isAdmin ? 'selected' : ''}>Admin</option>
-                                </select>
-                            </span>
-                            <span class="lojas-checkbox-group" data-id="${u.id}">
-                                ${lojasFixas.map(loja => `
-                                    <label style="margin-right:10px;">
-                                        <input type="checkbox" value="${loja.id}"
-                                            ${(isAdmin ? 'checked disabled' : (lojasUsuario.includes(loja.nome) ? 'checked' : ''))}
-                                            class="loja-checkbox" data-id="${u.id}">
-                                        ${loja.nome}
-                                    </label>
-                                `).join('')}
-                            </span>
-                            <span>
-                                <button class="aprovar-btn" data-id="${u.id}">Aprovar</button>
-                            </span>
-                        </div>
-                        `;
-                    }).join('')}
                 </div>
             `;
+            }).join('')}
+    </div>
+`;
 
             // Eventos para aprovar usuário
             tabela.querySelectorAll('.aprovar-btn').forEach(btn => {
