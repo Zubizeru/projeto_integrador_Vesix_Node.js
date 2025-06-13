@@ -1,0 +1,109 @@
+{{!< main}} <nav class="barra-lateral" id="barraLateral">
+    <div class="cabecalho">
+        <img src="img/logobc3.png" alt="Logo" class="logo-img" id="logoImg">
+        <span class="logo-texto" id="logoTexto">AgileManager</span>
+        <button class="botao-menu" id="botaoMenu" aria-label="Minimizar/Maximizar menu">
+            <i class="fas fa-bars"></i>
+        </button>
+    </div>
+    <ul class="opcoes-menu" id="opcoesMenu">
+        <li class="ativo" data-conteudo="dashboard"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></li>
+        <li data-conteudo="estoque"><i class="fas fa-boxes"></i> <span>Estoque</span></li>
+        <li data-conteudo="movimentacao"><i class="fas fa-exchange-alt"></i> <span>Movimentação</span></li>
+        <li data-conteudo="entrada"><i class="fas fa-arrow-down"></i> <span>Entrada</span></li>
+        <li data-conteudo="saida"><i class="fas fa-arrow-up"></i> <span>Saída</span></li>
+        {{#if usuarioEhAdmin}}
+        <li data-conteudo="solicitacoes"><i class="fas fa-user-check"></i> <span>Solicitações</span></li>
+        {{/if}}
+    </ul>
+    <div class="opcoes-inferiores">
+        <ul>
+            <li id="botaoTema"><i class="fas fa-moon"></i> <span>Tema Escuro</span></li>
+            <li id="botaoLogout"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></li>
+        </ul>
+    </div>
+    </nav>
+    <div class="conteudo" id="conteudoPrincipal">
+        <div id="secaoDashboard" class="secao-conteudo ativo">
+            <h1>Dashboard</h1>
+            <p>Bem-vindo ao Agile Manager!</p>
+        </div>
+        <div id="secaoEstoque" class="secao-conteudo">
+            <div class="cabecalho-estoque">
+                <h1>Estoque</h1>
+                <button class="botao-adicionar-produto">Adicionar Produto</button>
+            </div>
+            <p>Gerencie seu estoque aqui.</p>
+        </div>
+        <div id="secaoMovimentacao" class="secao-conteudo">
+            <h1>Movimentação</h1>
+            <p>Veja as movimentações recentes.</p>
+        </div>
+        <div id="secaoEntrada" class="secao-conteudo">
+            <h1>Entrada</h1>
+            <p>Registre entradas de produtos.</p>
+        </div>
+        <div id="secaoSaida" class="secao-conteudo">
+            <h1>Saída</h1>
+            <p>Registre saídas de produtos.</p>
+        </div>
+        <div id="secaoSolicitacoes" class="secao-conteudo">
+            <h1>Solicitações de Cadastro</h1>
+            <div id="tabelaSolicitacoes">
+                <h1>Solicitações</h1>
+                <p>Gerencie novos acessos</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="sobreposicaoModal" class="sobreposicao-modal" style="display:none;">
+        <div class="modal-produto">
+            <button class="modal-fechar" id="botaoFecharModal" aria-label="Fechar">&times;</button>
+            <div class="modal-informacao">
+                O código do produto será gerado automaticamente pelo sistema
+            </div>
+            <form id="formularioAdicionarProduto" autocomplete="off">
+                <div class="modal-campo">
+                    <input type="text" id="sku" name="sku" placeholder=" ">
+                    <label for="sku">SKU</label>
+                </div>
+                <div class="modal-campo">
+                    <input type="text" id="nome" name="nome" placeholder=" ">
+                    <label for="nome">Nome</label>
+                </div>
+                <div class="modal-campo">
+                    <input type="text" id="categoria" name="categoria" placeholder=" ">
+                    <label for="categoria">Categoria</label>
+                </div>
+                <div class="modal-campo">
+                    <input type="number" id="quantidade" name="quantidade" min="0" placeholder=" ">
+                    <label for="quantidade">Quantidade Inicial</label>
+                </div>
+                <div class="modal-campo">
+                    <select id="localizacao" name="localizacao">
+                        <option value="" disabled selected hidden></option>
+                        <option value="Loja Principal">Loja Principal</option>
+                        <option value="Loja 1">Loja 1</option>
+                        <option value="Loja 2">Loja 2</option>
+                    </select>
+                    <label for="localizacao">Localização</label>
+                </div>
+                <div class="modal-campo">
+                    <input type="text" id="fornecedor" name="fornecedor" placeholder=" ">
+                    <label for="fornecedor">Fornecedor</label>
+                </div>
+                <div class="modal-campo">
+                    <input type="number" id="precoCompra" name="precoCompra" min="0" step="0.01" placeholder=" ">
+                    <label for="precoCompra">Preço de Compra</label>
+                </div>
+                <div class="modal-campo">
+                    <input type="number" id="precoVenda" name="precoVenda" min="0" step="0.01" placeholder=" ">
+                    <label for="precoVenda">Preço de Venda</label>
+                </div>
+                <div class="modal-acoes">
+                    <button type="button" class="modal-cancelar" id="botaoCancelarModal">Cancelar</button>
+                    <button type="submit" class="modal-adicionar">Adicionar</button>
+                </div>
+            </form>
+        </div>
+    </div>

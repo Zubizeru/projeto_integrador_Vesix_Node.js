@@ -1,0 +1,927 @@
+/* -------------------------------------
+Importação de Fonte (apenas os pesos usados)
+------------------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --primary: #944FB2;
+    --secundarycolor: #944fb280;
+    --gradient: linear-gradient(135deg, #3468B9, #504CAE, #704CAC, #944FB2);
+    --reversegradient: linear-gradient(135deg, #944FB2, #704CAC, #504CAE, #3468B9);
+    --error: #ff4d4d;
+    --link: #504CAE;
+}
+
+/* -------------------------------------
+   RESET E CONFIGURAÇÕES GLOBAIS
+------------------------------------- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+
+/* -------------------------------------
+   ESTILOS DO BODY E BACKGROUND
+------------------------------------- */
+body {
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: var(--gradient);
+    transition: background 0.5s ease;
+    overflow: hidden;
+    position: relative;
+}
+
+body.register-active {
+    background: var(--reversegradient);
+}
+
+/* -------------------------------------
+   BACKGROUND GLASS
+------------------------------------- */
+.glass-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    background: rgba(189, 189, 189, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    z-index: 0;
+}
+
+
+/* -------------------------------------
+   CONTAINER PRINCIPAL
+------------------------------------- */
+.container {
+    position: relative;
+    width: 1300px;
+    height: 750px;
+    background: #fff;
+    border-radius: 0;
+    box-shadow: 0 0 30px rgba(0, 0, 0, .2);
+    margin: 20px;
+    overflow: hidden;
+}
+
+.recsenha {
+    position: relative;
+    width: 700px;
+    height: 700px;
+    margin: 20px 5px;
+    background: #ffffff;
+    backdrop-filter: blur(10px);
+    display: none;
+    align-items: baseline;
+    justify-content: center;
+    z-index: 3;
+    padding: 80px 0px;
+}
+
+.recsenha form {
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    align-items: stretch;
+    justify-content: center;
+    width: 60%;
+}
+
+/* -------------------------------------
+   BOX DOS FORMULÁRIOS
+------------------------------------- */
+
+.form-box {
+    position: absolute;
+    right: 0;
+    width: 50%;
+    height: 100%;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    color: #333;
+    text-align: center;
+    padding: 40px 40px;
+    z-index: 1;
+    transition: all 0.4s ease-in-out 0.6s, visibility 0s 0.6s;
+}
+
+/* Formulário de Registro inicialmente escondido */
+.form-box.register {
+    visibility: hidden;
+}
+
+/* Ao ativar o container, altera a posição e visibilidade */
+.container.active .form-box {
+    right: 50%;
+}
+
+.container.active .form-box.register {
+    visibility: visible;
+}
+
+.form-box.forgot {
+    position: absolute;
+    right: 0;
+    width: 50%;
+    height: 100%;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    color: #333;
+    text-align: center;
+    padding: 40px;
+    z-index: 1;
+    transition: all 0.4s ease-in-out 0.6s, visibility 0s 0.6s;
+    visibility: hidden;
+    z-index: 2;
+}
+
+.container.active-forgot .form-box.login {
+    visibility: hidden;
+    display: none;
+}
+
+.container.active-forgot .form-box.forgot {
+    visibility: visible;
+    display: flex;
+    /* Em vez de block */
+}
+
+/* -------------------------------------
+   LOGO E ANIMAÇÕES
+------------------------------------- */
+.form-logo {
+    text-align: center;
+    margin-bottom: 0;
+}
+
+.form-logotela2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.float-wrapper {
+    animation: floatY 3s ease-in-out infinite;
+    display: inline-block;
+    will-change: transform;
+}
+
+.float-wrapper img {
+    max-width: 200px;
+    height: auto;
+    animation: tilt 6s ease-in-out infinite;
+    will-change: transform;
+}
+
+/* Animação: movimento vertical */
+@keyframes floatY {
+    0% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-8px);
+    }
+
+    100% {
+        transform: translateY(0);
+    }
+}
+
+/* Animação: leve rotação */
+@keyframes tilt {
+
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    25% {
+        transform: rotate(-1.5deg);
+    }
+
+    75% {
+        transform: rotate(1.5deg);
+    }
+}
+
+.area {
+    background: var(--reversegradient);
+    width: 100%;
+    height: 100vh;
+    opacity: 0.5;
+}
+
+.circles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.circles li {
+    position: absolute;
+    display: block;
+    list-style: none;
+    width: 20px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.6);
+    animation: animate 25s linear infinite;
+    bottom: -150px;
+
+}
+
+.circles li:nth-child(1) {
+    left: 25%;
+    width: 80px;
+    height: 80px;
+    animation-delay: 0s;
+}
+
+
+.circles li:nth-child(2) {
+    left: 10%;
+    width: 20px;
+    height: 20px;
+    animation-delay: 2s;
+    animation-duration: 12s;
+}
+
+.circles li:nth-child(3) {
+    left: 70%;
+    width: 20px;
+    height: 20px;
+    animation-delay: 4s;
+}
+
+.circles li:nth-child(4) {
+    left: 40%;
+    width: 60px;
+    height: 60px;
+    animation-delay: 0s;
+    animation-duration: 18s;
+}
+
+.circles li:nth-child(5) {
+    left: 65%;
+    width: 20px;
+    height: 20px;
+    animation-delay: 0s;
+}
+
+.circles li:nth-child(6) {
+    left: 75%;
+    width: 110px;
+    height: 110px;
+    animation-delay: 3s;
+}
+
+.circles li:nth-child(7) {
+    left: 35%;
+    width: 150px;
+    height: 150px;
+    animation-delay: 7s;
+}
+
+.circles li:nth-child(8) {
+    left: 50%;
+    width: 25px;
+    height: 25px;
+    animation-delay: 15s;
+    animation-duration: 45s;
+}
+
+.circles li:nth-child(9) {
+    left: 20%;
+    width: 15px;
+    height: 15px;
+    animation-delay: 2s;
+    animation-duration: 35s;
+}
+
+.circles li:nth-child(10) {
+    left: 85%;
+    width: 150px;
+    height: 150px;
+    animation-delay: 0s;
+    animation-duration: 11s;
+}
+
+
+
+@keyframes animate {
+
+    0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+        border-radius: 0;
+    }
+
+    100% {
+        transform: translateY(-1000px) rotate(720deg);
+        opacity: 0;
+        border-radius: 50%;
+    }
+
+}
+
+/* -------------------------------------
+   ESTILOS DOS FORMULÁRIOS
+------------------------------------- */
+form {
+    width: 100%;
+}
+
+.container h1,
+.recsenha h1 {
+    font-weight: 500;
+    font-size: 35px;
+}
+
+.container h2,
+.recsenha h2 {
+    font-weight: 300;
+    font-size: 16px;
+}
+
+
+/* -------------------------------------
+   INPUT BOX E LABELS
+------------------------------------- */
+
+.input-wrapper {
+    margin-bottom: 10px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    /* controla espaço entre input e erro */
+}
+
+.input-box {
+    position: relative;
+    margin-top: 15px;
+}
+
+.input-box input {
+    box-sizing: border-box;
+    width: 100%;
+    height: 45px;
+    padding: 0 50px 0 20px;
+    border-radius: 8px;
+    border: 2px solid var(--secundarycolor);
+    background: transparent;
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+    line-height: 45px;
+    outline: none;
+    transition: border 0.3s ease;
+    will-change: transform;
+}
+
+.input-box input:focus {
+    border-color: var(--secundarycolor);
+}
+
+
+.input-box label {
+    position: absolute;
+    top: 50%;
+    left: 15px;
+    transform: translateY(-50%);
+    color: var(--secundarycolor);
+    font-size: 14px;
+    background: white;
+    padding: 0 5px;
+    pointer-events: none;
+    z-index: 1;
+    transition: 0.3s;
+}
+
+.input-box input:focus~label,
+.input-box input.filled~label {
+    top: 0px;
+    font-size: 12px;
+    border-left: 2px solid var(--secundarycolor);
+    border-right: 2px solid var(--secundarycolor);
+}
+
+.input-box i,
+.input-box .toggle-password {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    pointer-events: none;
+    line-height: 1;
+    color: #888;
+}
+
+.input-box i {
+    right: 20px;
+    font-size: 20px;
+}
+
+.input-box .toggle-password {
+    right: 10px;
+    cursor: pointer;
+    color: #666;
+    z-index: 2;
+}
+
+/* Mensagem de erro */
+.error-message {
+    color: var(--error);
+    font-size: 13px;
+    padding-left: 5px;
+}
+
+.input-box input.erro {
+    border-color: var(--error);
+}
+
+.input-box label.erro {
+    color: var(--error);
+}
+
+.input-box input:focus~label {
+    top: 0px;
+    font-size: 12px;
+    border-left: 2px solid var(--secundarycolor);
+    border-right: 2px solid var(--secundarycolor);
+}
+
+.input-box input.filled~label {
+    top: 0px;
+    font-size: 12px;
+    border-left: 2px solid var(--secundarycolor);
+    border-right: 2px solid var(--secundarycolor);
+}
+
+.input-box input.erro~label {
+    top: 0px;
+    font-size: 12px;
+    color: var(--error);
+    border-left: 2px solid var(--error);
+    border-right: 2px solid var(--error);
+}
+
+/* Animação de erro */
+@keyframes bounce {
+
+    0%,
+    20%,
+    50%,
+    80%,
+    100% {
+        transform: translateY(0);
+    }
+
+    40% {
+        transform: translateY(-10px);
+    }
+
+    60% {
+        transform: translateY(-5px);
+    }
+}
+
+.bounce {
+    outline: 0;
+    border-color: var(--error);
+    animation: bounce 0.5s ease;
+    animation-delay: 0.25s;
+}
+
+
+/* -------------------------------------
+   LINKS E BOTÕES
+------------------------------------- */
+.forgot-link {
+    margin: -15px 0 15px;
+}
+
+.forgot-link a,
+.voltar-login a {
+    font-size: 14.5px;
+    color: var(--link);
+    text-decoration: none;
+}
+
+.btn,
+.btnform {
+    width: 100%;
+    height: 48px;
+    background: var(--gradient);
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, .1);
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: #fff;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    /* animação suave */
+    outline: none;
+    position: relative;
+    z-index: 0;
+}
+
+.btn:hover,
+.btnform:hover {
+    background: var(--gradient);
+    font-weight: bold;
+}
+
+
+/* -------------------------------------
+   ÍCONES SOCIAIS
+------------------------------------- */
+.social-icons {
+    display: flex;
+    justify-content: center;
+}
+
+.social-icons a {
+    display: inline-flex;
+    padding: 10px;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    font-size: 24px;
+    color: #333;
+    text-decoration: none;
+    margin: 0 8px;
+}
+
+
+/* -------------------------------------
+   PAINEL DE TOGGLE (LOGIN / REGISTER)
+------------------------------------- */
+.toggle-box {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.toggle-box::before {
+    content: '';
+    position: absolute;
+    left: -250%;
+    width: 300%;
+    height: 100%;
+    background: var(--gradient);
+    border-radius: 0px;
+    z-index: 2;
+    transition: all 1s ease-in-out;
+}
+
+.container.active .toggle-box::before {
+    left: 50%;
+}
+
+/* Painéis de Toggle */
+.toggle-panel {
+    position: absolute;
+    width: 50%;
+    height: 100%;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 2;
+    transition: all 0.4s ease-in-out;
+    padding: 0 40px;
+    text-align: center;
+    will-change: transform;
+}
+
+.toggle-panel-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.toggle-panel>.copyright {
+    margin-top: auto;
+    font-size: 10px;
+    color: #fff;
+    text-align: center;
+}
+
+/* Painel Esquerdo */
+.toggle-panel.toggle-left {
+    left: 0;
+    justify-content: center;
+    align-items: center;
+    transition-delay: 0.3s;
+    padding: 40px 30px;
+}
+
+.toggle-panel.toggle-left p,
+.toggle-panel.toggle-left h2,
+.toggle-panel.toggle-left h3 {
+    text-align: center;
+}
+
+.toggle-panel.toggle-left .slogan {
+    font-size: 40px;
+    font-weight: 300;
+    font-style: italic;
+    color: #fff;
+    margin-bottom: 40px;
+}
+
+.toggle-panel.toggle-left h2 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 10px;
+}
+
+.toggle-panel.toggle-left h3 {
+    font-size: 16px;
+    font-weight: 400;
+    color: #eee;
+}
+
+/* Ao ativar, move o painel esquerdo */
+.container.active .toggle-panel.toggle-left {
+    left: -50%;
+}
+
+/* Painel Direito */
+.toggle-panel.toggle-right {
+    right: -50%;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 30px;
+    transition: all 0.4s ease-in-out;
+}
+
+.toggle-panel.toggle-right p,
+.toggle-panel.toggle-right h2,
+.toggle-panel.toggle-right h3 {
+    text-align: center;
+}
+
+.toggle-panel.toggle-right .slogan {
+    font-size: 40px;
+    font-weight: 300;
+    font-style: italic;
+    color: #fff;
+    margin-bottom: 40px;
+}
+
+.toggle-panel.toggle-right h2 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 10px;
+}
+
+.toggle-panel.toggle-right h3 {
+    font-size: 16px;
+    font-weight: 400;
+    color: #eee;
+}
+
+/* Ao ativar, move o painel direito */
+.container.active .toggle-panel.toggle-right {
+    right: 0;
+    transition-duration: 0.8s;
+}
+
+/* Botões internos dos painéis */
+.toggle-panel .btn {
+    width: 160px;
+    height: 46px;
+    background: transparent;
+    border: 2px solid #fff;
+    box-shadow: none;
+    transition: all 0.3s ease;
+}
+
+.toggle-panel .btn.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+    cursor: default;
+}
+
+.toggle-panel .btn:hover {
+    background: #fff;
+    color: var(--secundarycolor);
+    cursor: pointer;
+}
+
+.bemvindo {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    margin: 50px 0px;
+}
+
+.naotemconta {
+    font-size: 12px;
+    margin-bottom: 5px;
+}
+
+/* -------------------------------------
+   AGUARDE APROVAÇÃO
+------------------------------------- */
+.aguarde-aprovacao-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    position: relative;
+    z-index: 2;
+}
+
+.aguarde-aprovacao-box {
+    background: rgb(255, 255, 255);
+    border-radius: 18px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+    padding: 40px 32px;
+    min-height: 65vh;
+    width: 100%;
+    max-width: 600px;
+    min-width: 320px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.aguarde-aprovacao-box h1 {
+    font-size: 2rem;
+    color: var(--primary, #944FB2);
+    margin-bottom: 10px;
+}
+
+.aguarde-aprovacao-box h2 {
+    font-size: 1.2rem;
+    color: #222;
+    margin-bottom: 18px;
+}
+
+.aguarde-aprovacao-box p {
+    color: #444;
+    margin-bottom: 24px;
+    font-size: 1rem;
+}
+
+.btnform.voltar-login-btn {
+    background: var(--primary, #944FB2);
+    color: #fff;
+    border: none;
+    padding: 12px 32px;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s;
+    display: inline-block;
+}
+
+.btnform.voltar-login-btn:hover {
+    background: #704CAC;
+}
+
+
+/* -------------------------------------
+   MEDIA QUERIES
+------------------------------------- */
+@media screen and (max-width: 650px) {
+    .container {
+        height: calc(100vh - 40px);
+    }
+
+    .form-box {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        height: 70%;
+        background-color: #fff;
+        padding: 30px 20px;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+        border-radius: 25px 25px 0 0;
+        transition: all 0.4s ease-in-out;
+    }
+
+    .float-wrapper img {
+        display: none;
+    }
+
+    .container.active .form-box {
+        right: 0;
+        bottom: 30%;
+    }
+
+    .toggle-box::before {
+        left: 0;
+        top: -270%;
+        width: 100%;
+        height: 300%;
+        border-radius: 0;
+        transition: all 1s ease-in-out;
+    }
+
+    .container.active .toggle-box::before {
+        left: 0;
+        top: 70%;
+    }
+
+    .toggle-panel {
+        width: 100%;
+        height: 30%;
+        transition: all 0.3s ease-in-out;
+    }
+
+    .bemvindo {
+        align-items: center;
+        margin: 10px 0;
+    }
+
+    .toggle-panel.toggle-left {
+        top: 0;
+        left: 0;
+        height: 30%;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        text-align: center;
+        color: #fff;
+    }
+
+    .toggle-panel.toggle-left h3,
+    .toggle-panel.toggle-right h3 {
+        margin: 5px 0;
+        font-size: 14px;
+        color: #fff;
+    }
+
+    .toggle-panel.toggle-left h2,
+    .toggle-panel.toggle-right h2 {
+        margin: 5px 0;
+        font-size: 18px;
+        color: #fff;
+    }
+
+    .toggle-panel.toggle-left .slogan,
+    .toggle-panel.toggle-right .slogan {
+        display: none;
+    }
+
+    .toggle-panel.toggle-left .btn,
+    .toggle-panel.toggle-right .btn {
+        display: inline-block;
+        margin-top: 10px;
+        padding: 8px 16px;
+        background-color: #fff;
+        color: var(--primary);
+        border: none;
+        border-radius: 20px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .container.active .toggle-panel.toggle-left {
+        left: 0;
+        top: -30%;
+    }
+
+    .toggle-panel.toggle-right {
+        right: 0;
+        bottom: -30%;
+    }
+
+    .container.active .toggle-panel.toggle-right {
+        bottom: 0;
+    }
+}
+
+@media screen and (max-width: 400px) {
+    .form-box {
+        padding: 20px;
+    }
+
+    .toggle-panel h1 {
+        font-size: 30px;
+    }
+}

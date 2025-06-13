@@ -1,0 +1,677 @@
+/* ======================= */
+/*   VARIÁVEIS GLOBAIS     */
+/* ======================= */
+:root {
+    /* ---- Dimensões da barra lateral ---- */
+    --largura-barra-lateral: 250px;
+    --largura-min-barra-lateral: 60px;
+
+    /* ---- Cores da barra lateral ---- */
+    --cor-hover: #2c2c54;
+    ----cor-texto: #fff;
+    --cor-principal: #5e35b1;
+    --cor-secundaria: #1e1e3f;
+    --cor-terciaria: #6c5ce78c;
+
+    /* ---- Cores do conteúdo ---- */
+    --fundo-conteudo: #f4f4f4;
+    --fundo-conteudo-escuro: #121212;
+    --texto-conteudo: #333;
+    --texto-conteudo-escuro: #f4f4f4;
+
+    /* ---- Transições ---- */
+    --duracao-transicao-curta: 0.2s;
+    --duracao-transicao-media: 0.3s;
+
+    /* ---- Sombras e efeitos ---- */
+    --sombra-leve: rgba(80, 76, 174, 0.10);
+
+    /* ---- Bordas e raios ---- */
+    --raio-modal: 16px;
+    --raio-campo: 6px;
+
+    /* ---- Erro -----*/
+    --cor-erro: #ff4d4d;
+}
+
+/* ======================= */
+/* RESET E BASE            */
+/* ======================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    min-height: 100vh;
+    background: var(--fundo-conteudo);
+    color: var(--texto-conteudo);
+    transition: background var(--duracao-transicao-media), color var(--duracao-transicao-media);
+}
+body.escuro {
+    background: var(--fundo-conteudo-escuro);
+    color: var(--texto-conteudo-escuro);
+}
+
+/* ======================= */
+/* BARRA LATERAL           */
+/* ======================= */
+.barra-lateral {
+    width: var(--largura-barra-lateral);
+    background: var(--cor-hover);
+    color: var(----cor-texto);
+    display: flex;
+    flex-direction: column;
+    transition: width var(--duracao-transicao-media);
+    min-width: var(--largura-min-barra-lateral);
+    height: 100vh;
+    position: relative;
+    z-index: 10;
+}
+.barra-lateral.minimizada {
+    width: var(--largura-min-barra-lateral);
+}
+
+/* Cabeçalho da barra */
+.barra-lateral .cabecalho {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--cor-secundaria);
+    padding: 16px;
+    min-height: 56px;
+}
+
+/* Logo */
+.barra-lateral .logo-img {
+    height: 32px;
+    width: 32px;
+    object-fit: contain;
+}
+.barra-lateral .logo-texto {
+    font-size: 1rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    transition: opacity var(--duracao-transicao-media), visibility var(--duracao-transicao-media);
+}
+.barra-lateral.minimizada .logo-img,
+.barra-lateral.minimizada .logo-texto {
+    opacity: 0;
+    visibility: hidden;
+    width: 0;
+    height: 0;
+    margin: 0;
+    padding: 0;
+}
+
+/* Botão menu */
+.barra-lateral .botao-menu {
+    background: none;
+    border: none;
+    color: var(----cor-texto);
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: margin var(--duracao-transicao-media);
+}
+.barra-lateral.minimizada .cabecalho {
+    justify-content: center;
+}
+.barra-lateral.minimizada .botao-menu {
+    margin: 0 auto;
+}
+
+/* Menu lateral */
+.barra-lateral .opcoes-menu {
+    list-style: none;
+    flex: 1;
+    padding: 0;
+    margin: 0;
+}
+.barra-lateral .opcoes-menu li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    cursor: pointer;
+    transition: background var(--duracao-transicao-curta);
+    font-size: 1rem;
+}
+.barra-lateral .opcoes-menu li:hover {
+    background: var(--cor-terciaria);
+}
+.barra-lateral .opcoes-menu li.ativo {
+    background: var(--cor-principal);
+}
+.barra-lateral .opcoes-menu li i {
+    font-size: 1.2rem;
+    min-width: 24px;
+    text-align: center;
+}
+.barra-lateral .opcoes-menu li span {
+    transition: opacity var(--duracao-transicao-media);
+}
+.barra-lateral.minimizada .opcoes-menu li span {
+    display: none;
+}
+
+/* Opções inferiores */
+.barra-lateral .opcoes-inferiores {
+    margin-top: auto;
+    padding-bottom: 10px;
+}
+.barra-lateral .opcoes-inferiores ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.barra-lateral .opcoes-inferiores li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    cursor: pointer;
+    transition: background var(--duracao-transicao-curta);
+    font-size: 1rem;
+}
+.barra-lateral .opcoes-inferiores li:hover {
+    background: var(--cor-terciaria);
+}
+.barra-lateral .opcoes-inferiores li i {
+    font-size: 1.2rem;
+    min-width: 24px;
+    text-align: center;
+}
+.barra-lateral.minimizada .opcoes-inferiores li span {
+    display: none;
+}
+
+/* ======================= */
+/* CONTEÚDO PRINCIPAL      */
+/* ======================= */
+.conteudo {
+    flex: 1;
+    padding: 32px 24px;
+    transition: background var(--duracao-transicao-media), color var(--duracao-transicao-media);
+    min-width: 0;
+}
+.secao-conteudo {
+    display: none;
+}
+.secao-conteudo.ativo {
+    display: block;
+}
+
+/* Cabeçalho de seção */
+.cabecalho-estoque {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+}
+
+/* Botão adicionar */
+.botao-adicionar-produto {
+    background: var(--cor-principal);
+    color: var(----cor-texto);
+    border: none;
+    border-radius: var(--raio-campo);
+    padding: 12px 28px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 8px var(--sombra-leve);
+    transition: filter var(--duracao-transicao-curta);
+}
+.botao-adicionar-produto:hover {
+    filter: brightness(0.85);
+}
+body.escuro .botao-adicionar-produto {
+    background: var(----cor-texto);
+    color: var(--cor-hover);
+}
+
+/* ======================= */
+/* MODAL                   */
+/* ======================= */
+.sobreposicao-modal {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(30, 30, 63, 0.7);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.modal-produto {
+    background: var(--fundo-conteudo);
+    border-radius: var(--raio-modal);
+    box-shadow: 0 8px 32px rgba(44,44,84,0.25);
+    padding: 32px 28px 24px 28px;
+    min-width: 340px;
+    max-width: 40vw;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    transition: background var(--duracao-transicao-media), color var(--duracao-transicao-media);
+}
+body.escuro .modal-produto {
+    background: var(--cor-secundaria);
+    color: var(--texto-conteudo-escuro);
+}
+.modal-fechar {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 2.2rem;
+    color: #888;
+    cursor: pointer;
+    transition: color var(--duracao-transicao-curta);
+    z-index: 1;
+}
+.modal-fechar:hover {
+    color: #b94fb2;
+}
+.modal-informacao {
+    background: #B9CFF4;
+    color: #686868;
+    border-radius: var(--raio-campo);
+    padding: 10px 18px;
+    margin-bottom: 10px;
+    font-size: 1rem;
+    text-align: center;
+}
+
+/* Campos do modal */
+.modal-campos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px 24px;
+}
+.modal-campo {
+    position: relative;
+    flex: 1 1 230px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 140px;
+    margin-bottom: 18px;
+}
+.modal-campo input,
+.modal-campo select {
+    padding: 14px 10px 7px 10px;
+    border: 1px solid var(--cor-principal);
+    border-radius: var(--raio-campo);
+    font-size: 1rem;
+    outline: none;
+    background: #f7f7fa;
+    transition: border var(--duracao-transicao-curta);
+}
+.modal-campo label {
+    position: absolute;
+    left: 14px;
+    top: 14px;
+    color: var(--cor-terciaria);
+    background: transparent;
+    pointer-events: none;
+    transition: 0.2s cubic-bezier(.4,0,.2,1);
+    font-size: 1rem;
+    padding: 0 4px;
+    z-index: 2;
+}
+
+/* Efeitos flutuantes */
+.modal-campo input:focus + label,
+.modal-campo input:not(:placeholder-shown) + label,
+.modal-campo input.filled + label,
+.modal-campo input.erro + label {
+    top: -10px;
+    left: 8px;
+    font-size: 0.85rem;
+    color: var(--cor-principal);
+    background: var(--fundo-conteudo);
+    padding: 0 4px;
+}
+body.escuro .modal-campo label {
+    background: var(--cor-secundaria);
+    color: #bbb;
+}
+body.escuro .modal-campo input:focus + label,
+body.escuro .modal-campo input:not(:placeholder-shown) + label,
+body.escuro .modal-campo input.filled + label,
+body.escuro .modal-campo input.erro + label {
+    background: var(--cor-secundaria);
+    color: #b94fb2;
+}
+.modal-campo select.filled + label,
+.modal-campo select:focus + label,
+.modal-campo select.erro + label {
+    top: -10px;
+    left: 8px;
+    font-size: 0.85rem;
+    color: var(--cor-principal);
+    background: var(--fundo-conteudo);
+    padding: 0 4px;
+}
+body.escuro .modal-campo select.filled + label,
+body.escuro .modal-campo select:focus + label,
+body.escuro .modal-campo select.erro + label {
+    background: var(--cor-secundaria);
+    color: #b94fb2;
+}
+body.escuro .modal-campo input,
+body.escuro .modal-campo select {
+    background: var(--cor-secundaria);
+    color: var(--texto-conteudo-escuro);
+    border: 1px solid #444;
+}
+
+/* Ações do modal */
+.modal-acoes {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 18px;
+}
+.modal-cancelar {
+    background: none;
+    color: #888;
+    border: none;
+    font-size: 1rem;
+    padding: 8px 18px;
+    border-radius: var(--raio-campo);
+    cursor: pointer;
+    transition: background var(--duracao-transicao-curta), color var(--duracao-transicao-curta);
+}
+.modal-cancelar:hover {
+    background: #eee;
+    color: #b94fb2;
+}
+.modal-adicionar {
+    background: var(--cor-hover);
+    color: var(----cor-texto);
+    border: none;
+    font-size: 1rem;
+    padding: 8px 22px;
+    border-radius: var(--raio-campo);
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter var(--duracao-transicao-curta);
+}
+.modal-adicionar:hover {
+    filter: brightness(0.85);
+}
+body.escuro .modal-adicionar {
+    background: var(----cor-texto);
+    color: var(--cor-hover);
+}
+
+/* ======================= */
+/* ANIMAÇÕES E ERROS       */
+/* ======================= */
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-10px); }
+    60% { transform: translateY(-5px); }
+}
+.bounce {
+    outline: 0;
+    border-color: var(--cor-erro) !important;
+    animation: bounce 0.5s ease;
+}
+.erro {
+    border-color: var(--cor-erro) !important;
+}
+.error-message {
+    color: var(--cor-erro);
+    font-size: 13px;
+    margin-top: 2px;
+}
+.modal-campo input.erro + label,
+.modal-campo select.erro + label {
+    color: var(--cor-erro) !important;
+}
+body.escuro .modal-campo input.erro + label,
+body.escuro .modal-campo select.erro + label {
+    color: var(--cor-erro) !important;
+}
+
+/* ======================= */
+/* SOLICITACOES - LISTA    */
+/* ======================= */
+.solicitacoes-lista {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px var(--sombra-leve);
+    background: #fff;
+}
+body.escuro .solicitacoes-lista {
+    background: var(--cor-secundaria);
+}
+.solicitacoes-header, .solicitacao-item {
+    display: grid;
+    grid-template-columns: 1.2fr 1.7fr 1fr 1.2fr 1fr;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+}
+.solicitacoes-header {
+    background: var(--cor-principal);
+    color: #fff;
+    font-weight: 600;
+    font-size: 1rem;
+}
+.solicitacao-item {
+    border-bottom: 1px solid #eee;
+    font-size: 0.98rem;
+    background: #faf8ff;
+    transition: background 0.2s;
+}
+body.escuro .solicitacao-item {
+    background: var(--cor-secundaria);
+    border-bottom: 1px solid #333;
+}
+.solicitacao-item:last-child {
+    border-bottom: none;
+}
+.solicitacao-nome, .solicitacao-email {
+    word-break: break-all;
+}
+.solicitacao-item select,
+.solicitacao-item input {
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--cor-principal);
+    font-size: 1rem;
+    background: #fff;
+    color: #333;
+    width: 100%;
+    max-width: 120px;
+}
+body.escuro .solicitacao-item select,
+body.escuro .solicitacao-item input {
+    background: var(--cor-secundaria);
+    color: #fff;
+    border: 1px solid #bbb;
+}
+.solicitacao-item .aprovar-btn {
+    background: var(--cor-principal);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 7px 18px;
+    font-size: 1rem;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+.solicitacao-item .aprovar-btn:hover {
+    background: #704CAC;
+}
+
+/* ======================= */
+/* SOLICITACOES - CHECKBOX */
+/* ======================= */
+.solicitacao-item .lojas-checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    align-items: center;
+    min-width: 120px;
+}
+.solicitacao-item .loja-checkbox {
+    accent-color: var(--cor-principal);
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+    vertical-align: middle;
+}
+.solicitacao-item .lojas-checkbox-group label {
+    display: flex;
+    align-items: center;
+    font-size: 0.97rem;
+    background: #f3f0fa;
+    border-radius: 6px;
+    padding: 3px 10px 3px 5px;
+    color: var(--cor-principal);
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    border: 1px solid #e0e0e0;
+}
+body.escuro .solicitacao-item .lojas-checkbox-group label {
+    background: var(--cor-secundaria);
+    color: #fff;
+    border: 1px solid #444;
+}
+.solicitacao-item .lojas-checkbox-group label:hover {
+    background: var(--cor-principal);
+    color: #fff;
+}
+
+/* ======================= */
+/* SOLICITACOES - RESPONSIVO */
+/* ======================= */
+@media (max-width: 700px) {
+    .solicitacao-item .lojas-checkbox-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px 0;
+    }
+    .solicitacao-item .lojas-checkbox-group label {
+        font-size: 0.95rem;
+        padding: 3px 8px 3px 5px;
+    }
+    .solicitacoes-header, .solicitacao-item {
+        grid-template-columns: 1fr 1.5fr 1fr;
+        grid-template-areas:
+            "nome email acoes"
+            "nivel lojas acoes";
+        gap: 8px;
+        font-size: 0.95rem;
+        padding: 10px 6px;
+    }
+    .solicitacoes-header span:nth-child(3),
+    .solicitacoes-header span:nth-child(4) {
+        display: none;
+    }
+    .solicitacao-item select,
+    .solicitacao-item input {
+        max-width: 100%;
+        font-size: 0.95rem;
+    }
+}
+
+/* ======================= */
+/* RESPONSIVIDADE          */
+/* ======================= */
+@media (max-width: 768px) {
+    .logo-texto {
+        display: none;
+    }
+    .logo-img {
+        margin-right: 0;
+    }
+    body {
+        flex-direction: column;
+    }
+    .barra-lateral {
+        flex-direction: row;
+        width: 100vw;
+        height: auto;
+        min-width: 0;
+        position: static;
+    }
+    .barra-lateral .cabecalho {
+        flex: 1;
+        justify-content: flex-start;
+        min-width: 0;
+        padding: 10px 12px;
+    }
+    .barra-lateral .logo-texto {
+        opacity: 1;
+        visibility: visible;
+        font-size: 1.1rem;
+    }
+    .barra-lateral .botao-menu {
+        display: none;
+    }
+    .barra-lateral .opcoes-menu {
+        flex-direction: row;
+        display: flex;
+        flex: 3;
+        padding: 0;
+        margin: 0;
+    }
+    .barra-lateral .opcoes-menu li {
+        flex: 1;
+        justify-content: center;
+        padding: 10px 0;
+        font-size: 0.95rem;
+    }
+    .barra-lateral .opcoes-menu li span {
+        display: none;
+    }
+    .barra-lateral .opcoes-inferiores {
+        flex: 1;
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-end;
+        align-items: center;
+        padding: 0 10px 0 0;
+        margin-top: 0;
+    }
+    .barra-lateral .opcoes-inferiores ul {
+        display: flex;
+        flex-direction: row;
+        width: 100%;
+        justify-content: flex-end;
+    }
+    .barra-lateral .opcoes-inferiores li {
+        padding: 10px 8px;
+        font-size: 0.95rem;
+    }
+    .barra-lateral .opcoes-inferiores li span {
+        display: none;
+    }
+    .barra-lateral.minimizada {
+        width: 100vw;
+    }
+    .botao-adicionar-produto {
+        padding: 8px 16px;
+        font-size: 0.9rem;
+        box-shadow: 0 2px 8px rgba(80, 76, 174, 0.10);
+        transition: background 0.2s, filter 0.2s;
+    }
+}

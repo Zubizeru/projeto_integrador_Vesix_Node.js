@@ -1,0 +1,27 @@
+{{!< auth}}
+
+<div class="glass-background">
+    <div class="area">
+        <ul class="circles">
+            <li></li><li></li><li></li><li></li><li></li>
+            <li></li><li></li><li></li><li></li><li></li>
+        </ul>
+    </div>
+</div>
+
+<div class="aguarde-aprovacao-container">
+    <div class="aguarde-aprovacao-box">
+        <div class="form-logo">
+            <div class="float-wrapper">
+                <img src="/img/logobc3.png" alt="Logo">
+            </div>
+        </div>
+        <h1>Cadastro Pendente</h1>
+        <h2>Olá{{#if nome}}, {{nome}}{{/if}}!</h2>
+        <p>
+            Seu cadastro foi realizado com sucesso, mas ainda precisa ser aprovado por um administrador.<br>
+            Por favor, aguarde a aprovação para acessar o sistema.
+        </p>
+        <a href="/login" class="btnform voltar-login-btn">Voltar ao Login</a>
+    </div>
+</div>
