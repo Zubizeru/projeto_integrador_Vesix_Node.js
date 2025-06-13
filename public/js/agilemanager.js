@@ -309,6 +309,16 @@ function carregarSolicitacoes() {
                 });
             });
 
+            // Evento para dispensar usuário
+            tabela.querySelectorAll('.dispensar-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.getAttribute('data-id');
+                    fetch(`/admin/usuarios/${id}/dispensar`, { method: 'POST' })
+                        .then(res => res.json())
+                        .then(() => carregarSolicitacoes());
+                });
+            });
+
             // Evento para mudança de nível de acesso
             tabela.querySelectorAll('.nivel-acesso').forEach(sel => {
                 sel.addEventListener('change', () => {

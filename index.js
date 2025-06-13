@@ -180,6 +180,15 @@ app.post('/admin/usuarios/:id/lojas', (req, res) => {
     });
 });
 
+// 5. Rota para dispensar (deletar) usuário
+app.post('/admin/usuarios/:id/dispensar', (req, res) => {
+    const id = req.params.id;
+    db.query('DELETE FROM usuario WHERE id = ?', [id], (err, result) => {
+        if (err) return res.status(500).json({ error: 'Erro ao dispensar usuário.' });
+        res.json({ success: true });
+    });
+});
+
 // ==============================
 // INICIALIZAÇÃO DO SERVIDOR
 // ==============================
