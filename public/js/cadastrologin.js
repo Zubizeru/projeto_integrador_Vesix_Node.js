@@ -117,6 +117,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        if (!toast) return;
+        toast.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 2500);
+    }
+
     // Validação de Login
     loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -129,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        
+
 
         fetch('/login', {
             method: 'POST',
@@ -140,7 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
             })
         })
             .then(async res => {
-                
+
                 // Se for HTML, redireciona para a página recebida
                 const contentType = res.headers.get('content-type');
                 if (contentType && contentType.includes('text/html')) {
@@ -152,12 +162,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     // Se for JSON, mostra erro
                     const data = await res.json();
-                    alert(data.error || 'Erro ao fazer login.');
+                    showToast(data.error || 'Erro ao fazer login.');
                 }
             })
             .catch(() => {
-                
-                alert('Erro ao fazer login.');
+
+                showToast('Erro ao fazer login.');
             });
     });
 
@@ -173,7 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
         erro |= marcarErro(confirmarSenha, senhaCadastro.value !== confirmarSenha.value, 'As senhas não coincidem.');
 
         if (!erro) {
-            
+
             fetch('/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -185,7 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
             })
                 .then(res => res.json())
                 .then(data => {
-                    
+
                     if (data.success) {
                         alert(data.message);
                         cadastroForm.reset();
@@ -195,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 })
                 .catch(() => {
-                    
+
                     alert('Erro ao cadastrar.');
                 });
         }

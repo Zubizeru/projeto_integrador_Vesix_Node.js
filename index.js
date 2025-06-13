@@ -6,7 +6,6 @@ const exphbs = require('express-handlebars');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcryptjs');
 const mysql = require('mysql2');
-
 const app = express();
 
 // ==============================
@@ -60,7 +59,7 @@ app.post('/register', (req, res) => {
     const hash = bcrypt.hashSync(senha, 10);
     db.query(
         'INSERT INTO usuario (nome, email, senha, loja, ativo) VALUES (?, ?, ?, ?, ?)',
-        [nome, email, hash, 'ESTOQUE_PRINCIPAL', false],
+        [nome, email, hash, 'Loja Principal', false],
         (err, result) => {
             if (err) {
                 if (err.code === 'ER_DUP_ENTRY') {
