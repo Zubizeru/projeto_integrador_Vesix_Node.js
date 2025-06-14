@@ -228,9 +228,7 @@ body.escuro {
 
 /* Cabeçalho de seção */
 .cabecalho-estoque {
-    display: flex;
     align-items: center;
-    justify-content: space-between;
     margin-bottom: 18px;
 }
 
@@ -449,6 +447,23 @@ body.escuro .modal-campo select {
 
 .modal-adicionar:hover {
     filter: brightness(0.85);
+}
+
+.titulosecao {
+    font-size: 2.0rem;
+    font-weight: 600;
+    color: var(--cor-principal);
+}
+
+.subtitulo-secao {
+    font-size: 0.9rem;
+    color: var(--cor-secundaria);
+    margin-bottom: 12px;
+}
+
+.btnadicionarproduto {
+    display: flex;
+    flex-direction: row-reverse;
 }
 
 body.escuro .modal-adicionar {
