@@ -189,6 +189,25 @@ app.post('/admin/usuarios/:id/dispensar', (req, res) => {
     });
 });
 
+// 6. Listar todos os usuários (ativos e inativos)
+app.get('/admin/usuarios/todos', (req, res) => {
+    db.query(
+        `SELECT u.id, u.nome, u.email, u.nivel_acesso, u.ativo, 
+                GROUP_CONCAT(ul.loja_id) as lojas
+         FROM usuario u
+         LEFT JOIN usuario_loja ul ON u.id = ul.usuario_id
+         GROUP BY u.id`,
+        (err, results) => {
+            if (err) return res.status(500).json([]);
+            const usuarios = results.map(u => ({
+                ...u,
+                lojas: u.lojas ? u.lojas.split(',').map(Number) : []
+            }));
+            res.json(usuarios);
+        }
+    );
+});
+
 // ==============================
 // INICIALIZAÇÃO DO SERVIDOR
 // ==============================

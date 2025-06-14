@@ -461,7 +461,7 @@ body.escuro .modal-campo select {
     margin-bottom: 12px;
 }
 
-.btnadicionarproduto {
+.btnnolado {
     display: flex;
     flex-direction: row-reverse;
 }
@@ -517,6 +517,55 @@ body.escuro .modal-adicionar {
 body.escuro .modal-campo input.erro+label,
 body.escuro .modal-campo select.erro+label {
     color: var(--cor-erro) !important;
+}
+
+/* ======================= */
+/* TOASTS DE CONFIRMAÇÃO   */  
+/* ======================= */
+
+/* Toast de confirmação no topo */
+.toast-confirm {
+  visibility: hidden;
+  min-width: 300px;
+  margin-left: -150px;
+  background: #333;
+  color: #fff;
+  text-align: center;
+  border-radius: 8px;
+  padding: 20px 16px 16px 16px;
+  position: fixed;
+  z-index: 10000;
+  left: 50%;
+  top: 40px;
+  font-size: 1rem;
+  opacity: 0;
+  transition: opacity 0.4s, top 0.4s;
+  pointer-events: auto;
+  user-select: none;
+}
+.toast-confirm.show {
+  visibility: visible;
+  opacity: 1;
+  top: 60px;
+}
+.toast-confirm-btns {
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+.toast-confirm-btns button {
+  padding: 6px 18px;
+  border: none;
+  border-radius: 5px;
+  background: #444;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+.toast-confirm-btns button:hover {
+  background: #666;
 }
 
 /* ======================= */
@@ -604,8 +653,9 @@ body.escuro .solicitacao-item input {
 }
 
 
-.solicitacao-item .aprovar-btn {
-    background: var(--cor-principal);
+.solicitacao-item .aprovar-btn,
+.solicitacao-item .dispensar-btn,
+.solicitacao-item .salvar-btn {
     color: #fff;
     border: none;
     border-radius: 6px;
@@ -616,24 +666,15 @@ body.escuro .solicitacao-item input {
     transition: background 0.2s;
     max-width: 120px;
 }
-
+.solicitacao-item .aprovar-btn {
+    background: var(--cor-principal);
+}
 .solicitacao-item .aprovar-btn:hover {
     background: #704CAC;
 }
-
 .solicitacao-item .dispensar-btn {
     background: var(--cor-erro);
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    padding: 7px 18px;
-    font-size: 1rem;
-    cursor: pointer;
-    font-weight: 600;
-    transition: background 0.2s;
-    max-width: 120px;
 }
-
 .solicitacao-item .dispensar-btn:hover {
     background: #af3333;
 }

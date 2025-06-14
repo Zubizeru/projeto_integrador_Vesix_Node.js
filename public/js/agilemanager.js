@@ -1,4 +1,6 @@
-// Elementos principais
+// ==============================
+// ELEMENTOS PRINCIPAIS DA INTERFACE
+// ==============================
 const barraLateral = document.querySelector('#barraLateral');
 const botaoMenu = document.querySelector('#botaoMenu');
 const logo = document.querySelector('#logoTexto');
@@ -11,25 +13,30 @@ const botaoAbrirModal = document.querySelector('.botao-adicionar-produto');
 const botaoFecharModal = document.querySelector('#botaoFecharModal');
 const botaoCancelarModal = document.querySelector('#botaoCancelarModal');
 const formularioAdicionarProduto = document.querySelector('#formularioAdicionarProduto');
+const botaoGerenciarUsuario = document.querySelector('.botao-gerenciarusuario');
 
-// Modal Adicionar Produto
+// ==============================
+// MODAL DE PRODUTO
+// ==============================
 if (botaoAbrirModal) {
     botaoAbrirModal.addEventListener('click', () => {
         sobreposicaoModal.style.display = 'flex';
     });
 }
-// Fechar ao clicar fora do modal
 sobreposicaoModal.addEventListener('click', (e) => {
     if (e.target === sobreposicaoModal) {
         sobreposicaoModal.style.display = 'none';
     }
 });
-// Prevenir submit real
-formularioAdicionarProduto.addEventListener('submit', function (e) {
-    e.preventDefault();
-});
+if (formularioAdicionarProduto) {
+    formularioAdicionarProduto.addEventListener('submit', function (e) {
+        e.preventDefault();
+    });
+}
 
-// Ativar menu
+// ==============================
+// MENU LATERAL E SEÇÕES
+// ==============================
 function ativarMenu(li) {
     for (let item of opcoesMenu) {
         item.classList.remove('ativo');
@@ -82,7 +89,19 @@ for (let item of opcoesMenu) {
     });
 }
 
-// Minimizar/Maximizar barra lateral (apenas desktop/tablet)
+// ==============================
+// GERENCIAR USUÁRIOS
+// ==============================
+if (botaoGerenciarUsuario) {
+    botaoGerenciarUsuario.addEventListener('click', function () {
+        mostrarSecao('secaoSolicitacoes');
+        carregarGerenciarUsuarios();
+    });
+}
+
+// ==============================
+// RESPONSIVIDADE E MENU
+// ==============================
 function ehMobile() {
     return window.innerWidth <= 768;
 }
@@ -104,8 +123,22 @@ botaoMenu.addEventListener('click', function (e) {
         barraLateral.classList.toggle('minimizada');
     }
 });
+window.addEventListener('resize', atualizarEstadoBarraLateral);
+window.addEventListener('DOMContentLoaded', atualizarEstadoBarraLateral);
 
-// Tema claro/escuro
+botaoMenu.addEventListener('click', function () {
+    if (barraLateral.classList.contains('minimizada')) {
+        logo.style.opacity = '0';
+        logo.style.visibility = 'hidden';
+    } else {
+        logo.style.opacity = '1';
+        logo.style.visibility = 'visible';
+    }
+});
+
+// ==============================
+// TEMA CLARO/ESCURO
+// ==============================
 botaoTema.addEventListener('click', function () {
     document.body.classList.toggle('escuro');
     const icone = botaoTema.querySelector('i');
@@ -120,29 +153,49 @@ botaoTema.addEventListener('click', function () {
     }
 });
 
-// Logout
+// ==============================
+// TOAST DE CONFIRMAÇÃO
+// ==============================
+function showToastConfirm(msg, onConfirm) {
+    const toast = document.getElementById('toastConfirm');
+    if (!toast) return;
+
+    toast.innerHTML = `
+        <span>${msg}</span>
+        <div class="toast-confirm-btns">
+            <button id="toastBtnSim">Sim</button>
+            <button id="toastBtnNao">Não</button>
+        </div>
+    `;
+    toast.classList.add('show');
+
+    const btnSim = document.getElementById('toastBtnSim');
+    const btnNao = document.getElementById('toastBtnNao');
+
+    btnSim.onclick = () => {
+        toast.classList.remove('show');
+        if (onConfirm) onConfirm(true);
+    };
+    btnNao.onclick = () => {
+        toast.classList.remove('show');
+        if (onConfirm) onConfirm(false);
+    };
+}
+
+// ==============================
+// LOGOUT COM CONFIRMAÇÃO
+// ==============================
 botaoLogout.addEventListener('click', function () {
-    if (confirm('Tem certeza que deseja sair?')) {
-        window.location.href = '/login';
-    }
+    showToastConfirm('Tem certeza que deseja sair?', function (confirmado) {
+        if (confirmado) {
+            window.location.href = '/login';
+        }
+    });
 });
 
-// Responsividade
-window.addEventListener('resize', atualizarEstadoBarraLateral);
-window.addEventListener('DOMContentLoaded', atualizarEstadoBarraLateral);
-
-// Garante que ao minimizar, o botão hamburger sempre fique clicável e centralizado
-// e que ao maximizar, a logo volte a aparecer
-botaoMenu.addEventListener('click', function () {
-    if (barraLateral.classList.contains('minimizada')) {
-        logo.style.opacity = '0';
-        logo.style.visibility = 'hidden';
-    } else {
-        logo.style.opacity = '1';
-        logo.style.visibility = 'visible';
-    }
-});
-
+// ==============================
+// MODAL PRODUTO - ERROS E VALIDAÇÃO
+// ==============================
 const camposProduto = formularioAdicionarProduto
     ? formularioAdicionarProduto.querySelectorAll('input, select')
     : [];
@@ -169,7 +222,7 @@ function limparErroProduto(input) {
 
 if (formularioAdicionarProduto) {
     formularioAdicionarProduto.addEventListener('submit', function (e) {
-        e.preventDefault(); // Sempre previne o envio/fechamento do modal
+        e.preventDefault();
         let erro = false;
         camposProduto.forEach(input => {
             if (!input.value || (input.type === 'number' && input.value === '')) {
@@ -183,43 +236,28 @@ if (formularioAdicionarProduto) {
             formularioAdicionarProduto.reset();
             camposProduto.forEach(limparErroProduto);
         }
-        // O modal nunca fecha aqui!
     });
 
-    // Efeito label flutuante e limpa erro ao digitar/selecionar
     camposProduto.forEach(input => {
         input.addEventListener('input', () => {
-            // Efeito label flutuante
-            if (input.tagName === 'SELECT') {
-                if (input.value) {
-                    input.classList.add('filled');
-                } else {
-                    input.classList.remove('filled');
-                }
+            if (input.value) {
+                input.classList.add('filled');
             } else {
-                if (input.value) {
-                    input.classList.add('filled');
-                } else {
-                    input.classList.remove('filled');
-                }
+                input.classList.remove('filled');
             }
-            // Limpa erro ao digitar/selecionar
             if (input.value && !(input.type === 'number' && input.value === '')) {
                 limparErroProduto(input);
             }
         });
-        // Inicializa estado ao carregar
         if (input.value) input.classList.add('filled');
         else input.classList.remove('filled');
     });
 }
 
-// Função para limpar todos os erros dos campos do produto
 function limparTodosErrosProduto() {
     camposProduto.forEach(limparErroProduto);
 }
 
-// Ao cancelar ou fechar, limpa os erros também
 if (botaoCancelarModal) {
     botaoCancelarModal.addEventListener('click', () => {
         if (formularioAdicionarProduto) formularioAdicionarProduto.reset();
@@ -241,6 +279,9 @@ sobreposicaoModal.addEventListener('click', (e) => {
     }
 });
 
+// ==============================
+// SOLICITAÇÕES DE USUÁRIOS PENDENTES
+// ==============================
 function carregarSolicitacoes() {
     fetch('/admin/usuarios/pendentes')
         .then(res => res.json())
@@ -250,7 +291,6 @@ function carregarSolicitacoes() {
                 tabela.innerHTML = '<p style="text-align:center; color:var(--cor-principal); font-weight:600;">Nenhuma solicitação pendente.</p>';
                 return;
             }
-            // Opções fixas de loja
             const lojasFixas = [
                 { id: 1, nome: 'Loja Principal' },
                 { id: 2, nome: 'Loja 1' },
@@ -309,13 +349,17 @@ function carregarSolicitacoes() {
                 });
             });
 
-            // Evento para dispensar usuário
+            // Evento para dispensar usuário com confirmação
             tabela.querySelectorAll('.dispensar-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const id = btn.getAttribute('data-id');
-                    fetch(`/admin/usuarios/${id}/dispensar`, { method: 'POST' })
-                        .then(res => res.json())
-                        .then(() => carregarSolicitacoes());
+                    showToastConfirm('Tem certeza que deseja dispensar este usuário?', function (confirmado) {
+                        if (confirmado) {
+                            fetch(`/admin/usuarios/${id}/dispensar`, { method: 'POST' })
+                                .then(res => res.json())
+                                .then(() => carregarSolicitacoes());
+                        }
+                    });
                 });
             });
 
@@ -366,3 +410,127 @@ function carregarSolicitacoes() {
         });
 }
 
+// ==============================
+// GERENCIAMENTO DE TODOS OS USUÁRIOS
+// ==============================
+function carregarGerenciarUsuarios() {
+    fetch('/admin/usuarios/todos')
+        .then(res => res.json())
+        .then(usuarios => {
+            const tabela = document.getElementById('tabelaSolicitacoes');
+            if (!usuarios.length) {
+                tabela.innerHTML = '<p style="text-align:center; color:var(--cor-principal); font-weight:600;">Nenhum usuário cadastrado.</p>';
+                return;
+            }
+            const lojasFixas = [
+                { id: 1, nome: 'Loja Principal' },
+                { id: 2, nome: 'Loja 1' },
+                { id: 3, nome: 'Loja 2' }
+            ];
+            tabela.innerHTML = `
+    <div class="solicitacoes-lista">
+        <div class="solicitacoes-header">
+            <span>Nome</span>
+            <span>Email</span>
+            <span>Nível</span>
+            <span>Lojas</span>
+            <span>Ações</span>
+        </div>
+        ${usuarios.map(u => {
+                const lojasUsuario = u.lojas || [];
+                const isAdmin = u.nivel_acesso === 'admin';
+                const isGerente = u.nivel_acesso === 'gerente';
+                let cardClass = '';
+                if (isAdmin) cardClass = 'card-admin';
+                else if (isGerente) cardClass = 'card-gerente';
+                else cardClass = 'card-usuario';
+                return `
+                <div class="solicitacao-item ${cardClass}">
+                    <span class="solicitacao-nome">${u.nome}</span>
+                    <span class="solicitacao-email">${u.email}</span>
+                    <span>
+                        <select data-id="${u.id}" class="nivel-acesso" ${isAdmin ? 'disabled' : ''}>
+                            <option value="usuario" ${u.nivel_acesso === 'usuario' ? 'selected' : ''}>Usuário</option>
+                            <option value="gerente" ${u.nivel_acesso === 'gerente' ? 'selected' : ''}>Gerente</option>
+                            <option value="admin" ${u.nivel_acesso === 'admin' ? 'selected' : ''}>Admin</option>
+                        </select>
+                    </span>
+                    <span class="lojas-checkbox-group" data-id="${u.id}">
+                        ${lojasFixas.map(loja => `
+                            <label style="margin-right:10px;">
+                                <input type="checkbox" value="${loja.id}"
+                                    ${(isAdmin ? 'checked disabled' : (lojasUsuario.includes(loja.id) ? 'checked' : ''))}
+                                    class="loja-checkbox" data-id="${u.id}">
+                                ${loja.nome}
+                            </label>
+                        `).join('')}
+                    </span>
+                    <div class="btn-acoes">
+                        ${isAdmin ? '' : `
+                        <button class="salvar-btn" data-id="${u.id}">Salvar</button>
+                        <button class="dispensar-btn" data-id="${u.id}">Excluir</button>
+                        `}
+                    </div>
+                </div>
+            `;
+            }).join('')}
+    </div>
+`;
+
+            // Evento para dispensar usuário com confirmação
+            tabela.querySelectorAll('.dispensar-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.getAttribute('data-id');
+                    showToastConfirm('Tem certeza que deseja excluir este usuário?', function (confirmado) {
+                        if (confirmado) {
+                            fetch(`/admin/usuarios/${id}/dispensar`, { method: 'POST' })
+                                .then(res => res.json())
+                                .then(() => carregarGerenciarUsuarios());
+                        }
+                    });
+                });
+            });
+            // Evento para mudança de nível de acesso
+            tabela.querySelectorAll('.nivel-acesso').forEach(sel => {
+                sel.addEventListener('change', () => {
+                    const id = sel.getAttribute('data-id');
+                    fetch(`/admin/usuarios/${id}/nivel`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ nivel_acesso: sel.value })
+                    });
+                    // Se admin, marcar todas as lojas e desabilitar
+                    const group = tabela.querySelector(`.lojas-checkbox-group[data-id="${id}"]`);
+                    if (group) {
+                        const checkboxes = group.querySelectorAll('.loja-checkbox');
+                        if (sel.value === 'admin') {
+                            checkboxes.forEach(cb => {
+                                cb.checked = true;
+                                cb.disabled = true;
+                            });
+                        } else {
+                            checkboxes.forEach(cb => {
+                                cb.disabled = false;
+                            });
+                        }
+                        group.dispatchEvent(new Event('change'));
+                    }
+                });
+            });
+            // Evento para alteração das lojas (exceto admin)
+            tabela.querySelectorAll('.lojas-checkbox-group').forEach(group => {
+                group.addEventListener('change', () => {
+                    const id = group.getAttribute('data-id');
+                    const checkboxes = group.querySelectorAll('.loja-checkbox');
+                    const lojas = Array.from(checkboxes)
+                        .filter(cb => cb.checked)
+                        .map(cb => parseInt(cb.value));
+                    fetch(`/admin/usuarios/${id}/lojas`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ lojas })
+                    });
+                });
+            });
+        });
+}

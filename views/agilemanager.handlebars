@@ -29,9 +29,9 @@
             <p class="subtitulo-secao">Bem-vindo ao Agile Manager!</p>
         </div>
         <div id="secaoEstoque" class="secao-conteudo">
-                <h1 class="titulosecao">Estoque</h1>
-                <p class="subtitulo-secao">Gerencie seu estoque aqui.</p>
-            <div class="btnadicionarproduto">
+            <h1 class="titulosecao">Estoque</h1>
+            <p class="subtitulo-secao">Gerencie seu estoque aqui.</p>
+            <div class="btnnolado">
                 <button class="botao-adicionar-produto">Adicionar Produto</button>
             </div>
         </div>
@@ -50,6 +50,9 @@
         <div id="secaoSolicitacoes" class="secao-conteudo">
             <h1 class="titulosecao">Solicitações de Cadastro</h1>
             <p class="subtitulo-secao">Gerencie novos acessos</p>
+            <div class="btnnolado">
+                <button class="botao-gerenciarusuario">Adicionar Produto</button>
+            </div>
             <div id="tabelaSolicitacoes">
             </div>
         </div>
@@ -104,5 +107,12 @@
                     <button type="submit" class="modal-adicionar">Adicionar</button>
                 </div>
             </form>
+        </div>
+    </div>
+    <div id="toastConfirm" class="toast-confirm">
+        <span id="toastConfirmMsg"></span>
+        <div class="toast-confirm-btns">
+            <button id="toastBtnSim">Sim</button>
+            <button id="toastBtnNao">Não</button>
         </div>
     </div>
