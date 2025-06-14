@@ -94,8 +94,21 @@ for (let item of opcoesMenu) {
 // ==============================
 if (botaoGerenciarUsuario) {
     botaoGerenciarUsuario.addEventListener('click', function () {
-        mostrarSecao('secaoSolicitacoes');
-        carregarGerenciarUsuarios();
+        if (botaoGerenciarUsuario.classList.contains('botao-gerenciarusuario')) {
+            // Vai para gerenciamento de usuários
+            mostrarSecao('secaoSolicitacoes');
+            carregarGerenciarUsuarios();
+            botaoGerenciarUsuario.textContent = 'Ver Solicitações';
+            botaoGerenciarUsuario.classList.remove('botao-gerenciarusuario');
+            botaoGerenciarUsuario.classList.add('botao-versolicitacao');
+        } else {
+            // Volta para solicitações pendentes
+            mostrarSecao('secaoSolicitacoes');
+            carregarSolicitacoes();
+            botaoGerenciarUsuario.textContent = 'Gerenciar Usuários';
+            botaoGerenciarUsuario.classList.remove('botao-versolicitacao');
+            botaoGerenciarUsuario.classList.add('botao-gerenciarusuario');
+        }
     });
 }
 
@@ -314,9 +327,8 @@ function carregarSolicitacoes() {
                     <span class="solicitacao-email">${u.email}</span>
                     <span>
                         <select data-id="${u.id}" class="nivel-acesso">
-                            <option value="usuario" ${u.nivel_acesso === 'usuario' ? 'selected' : ''}>Usuário</option>
+                            <option value="usuario" ${u.nivel_acesso === 'funcionario' ? 'selected' : ''}>Funcionário</option>
                             <option value="gerente" ${u.nivel_acesso === 'gerente' ? 'selected' : ''}>Gerente</option>
-                            <option value="admin" ${u.nivel_acesso === 'admin' ? 'selected' : ''}>Admin</option>
                         </select>
                     </span>
                     <span class="lojas-checkbox-group" data-id="${u.id}">
@@ -417,6 +429,9 @@ function carregarGerenciarUsuarios() {
     fetch('/admin/usuarios/todos')
         .then(res => res.json())
         .then(usuarios => {
+            // Filtra apenas usuários ativos
+            usuarios = usuarios.filter(u => u.ativo);
+
             const tabela = document.getElementById('tabelaSolicitacoes');
             if (!usuarios.length) {
                 tabela.innerHTML = '<p style="text-align:center; color:var(--cor-principal); font-weight:600;">Nenhum usuário cadastrado.</p>';
