@@ -7,6 +7,16 @@ const bodyParser = require('body-parser');
 const bcrypt = require('bcryptjs');
 const mysql = require('mysql2');
 const app = express();
+const session = require('express-session');
+
+// ==============================
+// CONFIGURAÇÃO DO SESSION
+// ==============================
+app.use(session({
+    secret: 'seuSegredoSuperSecreto',
+    resave: false,
+    saveUninitialized: false
+}));
 
 // ==============================
 // CONFIGURAÇÃO DO SERVIDOR E VIEW ENGINE
@@ -114,6 +124,8 @@ app.post('/login', (req, res) => {
             return res.render('aguarde_aprovacao', { layout: 'auth', nome: usuario.nome });
         }
 
+        req.session.usuario_id = usuario.id;
+
         res.render('agilemanager', {
             layout: 'main',
             usuario,
@@ -204,6 +216,110 @@ app.get('/admin/usuarios/todos', (req, res) => {
                 lojas: u.lojas ? u.lojas.split(',').map(Number) : []
             }));
             res.json(usuarios);
+        }
+    );
+});
+
+// ==============================
+// ROTAS DE ENVIO DE PRODUTOS
+// ==============================
+app.post('/produtos', (req, res) => {
+    const { nome, sku, precoCompra, fornecedor, localizacao, quantidade, precoVenda } = req.body;
+
+    // 0. Verifica se o SKU já existe
+    db.query('SELECT id_produto FROM Produto WHERE sku = ?', [sku], (err, rows) => {
+        if (err) return res.status(500).json({ sucesso: false, erro: 'Erro ao verificar SKU.' });
+        if (rows.length > 0) {
+            return res.status(400).json({ sucesso: false, erro: 'Produto já cadastrado com este SKU.' });
+        }
+
+        // 1. Buscar ou criar fornecedor
+        db.query('SELECT id_fornecedor FROM Fornecedor WHERE nome = ?', [fornecedor], (err, fornRows) => {
+            if (err) return res.status(500).json({ sucesso: false, erro: 'Erro ao buscar fornecedor.' });
+
+            let id_fornecedor;
+            if (fornRows.length > 0) {
+                id_fornecedor = fornRows[0].id_fornecedor;
+                inserirProduto();
+            } else {
+                db.query('INSERT INTO Fornecedor (nome, cnpj, contato) VALUES (?, "", "")', [fornecedor], (err2, result) => {
+                    if (err2) return res.status(500).json({ sucesso: false, erro: 'Erro ao inserir fornecedor.' });
+                    id_fornecedor = result.insertId;
+                    inserirProduto();
+                });
+            }
+
+            function inserirProduto() {
+                db.query(
+                    'INSERT INTO Produto (nome, sku, preco_compra, id_fornecedor) VALUES (?, ?, ?, ?)',
+                    [nome, sku, precoCompra, id_fornecedor],
+                    (err3, resultProd) => {
+                        if (err3) return res.status(500).json({ sucesso: false, erro: 'Erro ao inserir produto.' });
+                        const id_produto = resultProd.insertId;
+
+                        // 3. Buscar id_loja
+                        db.query('SELECT id FROM loja WHERE nome = ?', [localizacao], (err4, lojaRows) => {
+                            if (err4 || lojaRows.length === 0) return res.status(500).json({ sucesso: false, erro: 'Erro ao buscar loja.' });
+                            const id_loja = lojaRows[0].id;
+
+                            // 4. Inserir estoque_loja
+                            db.query(
+                                'INSERT INTO estoque_loja (id_produto, id_loja, quantidade, preco_venda) VALUES (?, ?, ?, ?)',
+                                [id_produto, id_loja, quantidade, precoVenda],
+                                (err5) => {
+                                    if (err5) return res.status(500).json({ sucesso: false, erro: 'Erro ao inserir estoque.' });
+                                    res.json({ sucesso: true });
+                                }
+                            );
+                        });
+                    }
+                );
+            }
+        });
+    });
+});
+
+// Supondo que você tem o id do usuário logado em req.session.usuario_id
+
+// 1. Lojas do usuário
+app.get('/api/estoque/lojas', (req, res) => {
+    if (!req.session.usuario_id) {
+        return res.status(401).json({ error: 'Não autenticado' });
+    }
+    const usuarioId = req.session.usuario_id;
+    db.query(
+        `SELECT l.id, l.nome 
+         FROM loja l
+         INNER JOIN usuario_loja ul ON ul.loja_id = l.id
+         WHERE ul.usuario_id = ?`,
+        [usuarioId],
+        (err, rows) => {
+            if (err) return res.status(500).json([]);
+            res.json(rows);
+        }
+    );
+});
+
+// 2. Produtos da loja
+app.get('/api/estoque/produtos', (req, res) => {
+    const lojaId = req.query.loja;
+    db.query(
+        `SELECT 
+            p.id_produto, p.sku, p.nome, 
+            el.quantidade, 
+            f.nome as fornecedor, 
+            p.preco_compra, 
+            el.preco_venda, 
+            el.data_registro
+        FROM estoque_loja el
+        INNER JOIN Produto p ON p.id_produto = el.id_produto
+        LEFT JOIN Fornecedor f ON f.id_fornecedor = p.id_fornecedor
+        WHERE el.id_loja = ?
+        ORDER BY el.data_registro DESC`,
+        [lojaId],
+        (err, rows) => {
+            if (err) return res.status(500).json([]);
+            res.json(rows);
         }
     );
 });

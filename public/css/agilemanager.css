@@ -473,7 +473,9 @@ body.escuro .modal-campo select {
 
 .btnnolado {
     display: flex;
-    flex-direction: row-reverse;
+    align-items: center;
+    gap: 16px;
+    flex-direction: row-reverse; /* Se quiser o botão à direita e os filtros à esquerda */
 }
 
 body.escuro .modal-adicionar {
@@ -580,6 +582,35 @@ body.escuro .modal-campo select.erro+label {
 
 .toast-confirm-btns button:hover {
     background: #666;
+}
+
+/* Toast moderno no topo */
+.toast {
+    visibility: hidden;
+    min-width: 250px;
+    margin-left: -125px;
+    background: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 8px;
+    padding: 16px;
+    position: fixed;
+    z-index: 9999;
+    left: 50%;
+    top: 40px;
+    font-size: 1rem;
+    opacity: 0;
+    transition: opacity 0.4s, top 0.4s;
+    pointer-events: none;
+    /* Impede clique/interação */
+    user-select: none;
+    /* Impede seleção de texto */
+}
+
+.toast.show {
+    visibility: visible;
+    opacity: 1;
+    top: 60px;
 }
 
 /* ======================= */
@@ -774,40 +805,154 @@ body.escuro .solicitacao-item .lojas-checkbox-group label {
 }
 
 /* ======================= */
-/* SOLICITACOES - RESPONSIVO */
+/* ESTOQUE - TABELA RESPONSIVA */
 /* ======================= */
+.estoque-tabela {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.estoque-tabela-header,
+.estoque-tabela-row {
+    display: grid;
+    grid-template-columns: 60px 1fr 1fr 1fr 1fr 1fr 1fr 140px;
+    align-items: center;
+    background: #f7f7f7;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 1rem;
+}
+
+.estoque-tabela-header {
+    font-weight: bold;
+    background: var(--cor-principal, #704CAC);
+    color: #fff;
+}
+
+.estoque-tabela-row {
+    background: #fff;
+    border: 1px solid #eee;
+}
+
+.estoque-label {
+    display: none;
+}
+
+.estoque-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+}
+
+.estoque-titulo {
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+#estoque-loja-selector {
+    display: flex;
+    gap: 12px;
+    margin-left: auto;
+}
+
+.loja-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: var(--cor-principal, #704CAC);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    border: 2px solid var(--cor-principal, #704CAC);
+}
+
+.loja-btn-ativo {
+    background: var(--cor-principal, #704CAC);
+    color: #fff;
+    opacity: 1;
+}
+
+.loja-btn-filtrada {
+    background: var(--cor-secundaria); /* roxo escuro */
+    color: #fff;
+    opacity: 1;
+}
+
+.loja-btn-inativo {
+    background: #e0e0e0;
+    color: #aaa;
+    cursor: not-allowed;
+    border: 2px solid #e0e0e0;
+    opacity: 0.6;
+}
+
+@media (max-width: 900px) {
+
+    .estoque-tabela-header,
+    .estoque-tabela-row {
+        grid-template-columns: 40px 1fr 1fr 1fr 1fr 1fr 1fr 100px;
+        font-size: 0.95rem;
+    }
+}
+
 @media (max-width: 700px) {
-    .solicitacao-item .lojas-checkbox-group {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 4px 0;
-    }
-
-    .solicitacao-item .lojas-checkbox-group label {
-        font-size: 0.95rem;
-        padding: 3px 8px 3px 5px;
-    }
-
-    .solicitacoes-header,
-    .solicitacao-item {
-        grid-template-columns: 1fr 1.5fr 1fr;
-        grid-template-areas:
-            "nome email acoes"
-            "nivel lojas acoes";
-        gap: 8px;
-        font-size: 0.95rem;
-        padding: 10px 6px;
-    }
-
-    .solicitacoes-header span:nth-child(3),
-    .solicitacoes-header span:nth-child(4) {
+    .estoque-tabela-header {
         display: none;
     }
 
-    .solicitacao-item select,
-    .solicitacao-item input {
-        max-width: 100%;
-        font-size: 0.95rem;
+    .estoque-tabela-row {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-start;
+        background: #fff;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 10px;
+        font-size: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .estoque-tabela-row > div {
+        margin-bottom: 4px;
+        flex: 1 1 45%;
+        display: flex;
+        flex-direction: row; 
+        align-items: center;
+        gap: 4px;
+    }
+
+    .estoque-tabela-row>div:nth-child(-n+4) {
+        /* Primeira coluna: ID, SKU, Nome, Qtd */
+        order: 1;
+    }
+
+    .estoque-tabela-row>div:nth-child(n+5) {
+        /* Segunda coluna: Fornecedor, Compra, Venda, Registro */
+        order: 2;
+    }
+
+    .estoque-tabela-row .estoque-label {
+        font-weight: bold;
+        color: var(--cor-principal, #704CAC);
+        margin-right: 2px;
+        display: inline;
+        min-width: unset;
+    }
+
+    .estoque-label {
+        display: inline;
     }
 }
 
@@ -910,5 +1055,42 @@ body.escuro .solicitacao-item .lojas-checkbox-group label {
         font-size: 0.9rem;
         box-shadow: 0 2px 8px rgba(80, 76, 174, 0.10);
         transition: background 0.2s, filter 0.2s;
+    }
+
+    /* ======================= */
+    /* SOLICITACOES - RESPONSIVO */
+    /* ======================= */
+
+    .solicitacao-item .lojas-checkbox-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px 0;
+    }
+
+    .solicitacao-item .lojas-checkbox-group label {
+        font-size: 0.95rem;
+        padding: 3px 8px 3px 5px;
+    }
+
+    .solicitacoes-header,
+    .solicitacao-item {
+        grid-template-columns: 1fr 1.5fr 1fr;
+        grid-template-areas:
+            "nome email acoes"
+            "nivel lojas acoes";
+        gap: 8px;
+        font-size: 0.95rem;
+        padding: 10px 6px;
+    }
+
+    .solicitacoes-header span:nth-child(3),
+    .solicitacoes-header span:nth-child(4) {
+        display: none;
+    }
+
+    .solicitacao-item select,
+    .solicitacao-item input {
+        max-width: 100%;
+        font-size: 0.95rem;
     }
 }

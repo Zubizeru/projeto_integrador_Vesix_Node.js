@@ -33,7 +33,12 @@
             <p class="subtitulo-secao">Gerencie seu estoque aqui.</p>
             <div class="btnnolado">
                 <button class="botao-adicionar-produto">Adicionar Produto</button>
+                <div id="estoque-loja-selector"></div>
             </div>
+            <div class="estoque-header">
+                <span class="estoque-titulo">Produtos em Estoque</span>
+            </div>
+            <div id="estoqueTabela"></div>
         </div>
         <div id="secaoMovimentacao" class="secao-conteudo">
             <h1 class="titulosecao">Movimentação</h1>
@@ -74,10 +79,6 @@
                     <label for="nome">Nome</label>
                 </div>
                 <div class="modal-campo">
-                    <input type="text" id="categoria" name="categoria" placeholder=" ">
-                    <label for="categoria">Categoria</label>
-                </div>
-                <div class="modal-campo">
                     <input type="number" id="quantidade" name="quantidade" min="0" placeholder=" ">
                     <label for="quantidade">Quantidade Inicial</label>
                 </div>
@@ -116,3 +117,4 @@
             <button id="toastBtnNao">Não</button>
         </div>
     </div>
+    <div id="toast" class="toast"></div>

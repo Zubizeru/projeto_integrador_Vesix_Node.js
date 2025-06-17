@@ -28,11 +28,6 @@ sobreposicaoModal.addEventListener('click', (e) => {
         sobreposicaoModal.style.display = 'none';
     }
 });
-if (formularioAdicionarProduto) {
-    formularioAdicionarProduto.addEventListener('submit', function (e) {
-        e.preventDefault();
-    });
-}
 
 // ==============================
 // MENU LATERAL E SEÇÕES
@@ -71,6 +66,7 @@ for (let item of opcoesMenu) {
                 break;
             case 'estoque':
                 mostrarSecao('secaoEstoque');
+                carregarEstoque();
                 break;
             case 'movimentacao':
                 mostrarSecao('secaoMovimentacao');
@@ -195,6 +191,16 @@ function showToastConfirm(msg, onConfirm) {
     };
 }
 
+function showToast(message) {
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+    toast.textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 2500);
+}
+
 // ==============================
 // LOGOUT COM CONFIRMAÇÃO
 // ==============================
@@ -246,8 +252,35 @@ if (formularioAdicionarProduto) {
             }
         });
         if (!erro) {
-            formularioAdicionarProduto.reset();
-            camposProduto.forEach(limparErroProduto);
+            const dados = {
+                nome: formularioAdicionarProduto.nome.value,
+                sku: formularioAdicionarProduto.sku.value,
+                precoCompra: formularioAdicionarProduto.precoCompra.value,
+                fornecedor: formularioAdicionarProduto.fornecedor.value,
+                localizacao: formularioAdicionarProduto.localizacao.value,
+                quantidade: formularioAdicionarProduto.quantidade.value,
+                precoVenda: formularioAdicionarProduto.precoVenda.value
+            };
+
+            fetch('/produtos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dados)
+            })
+                .then(res => res.json())
+                .then(resposta => {
+                    if (resposta.sucesso) {
+                        formularioAdicionarProduto.reset();
+                        camposProduto.forEach(limparErroProduto);
+                        sobreposicaoModal.style.display = 'none';
+                        carregarEstoque();
+                    } else {
+                        showToast(resposta.erro || 'Erro ao cadastrar produto.', null);
+                    }
+                })
+                .catch(() => {
+                    showToast('Erro de comunicação com o servidor.', null);
+                });
         }
     });
 
@@ -327,7 +360,7 @@ function carregarSolicitacoes() {
                     <span class="solicitacao-email">${u.email}</span>
                     <span>
                         <select data-id="${u.id}" class="nivel-acesso">
-                            <option value="usuario" ${u.nivel_acesso === 'funcionario' ? 'selected' : ''}>Funcionário</option>
+                            <option value="funcionario" ${u.nivel_acesso === 'funcionario' ? 'selected' : ''}>Funcionário</option>
                             <option value="gerente" ${u.nivel_acesso === 'gerente' ? 'selected' : ''}>Gerente</option>
                         </select>
                     </span>
@@ -465,7 +498,7 @@ function carregarGerenciarUsuarios() {
                     <span class="solicitacao-email">${u.email}</span>
                     <span>
                         <select data-id="${u.id}" class="nivel-acesso" ${isAdmin ? 'disabled' : ''}>
-                            <option value="usuario" ${u.nivel_acesso === 'usuario' ? 'selected' : ''}>Usuário</option>
+                            <option value="usuario" ${u.nivel_acesso === 'funcionario' ? 'selected' : ''}>Usuário</option>
                             <option value="gerente" ${u.nivel_acesso === 'gerente' ? 'selected' : ''}>Gerente</option>
                             <option value="admin" ${u.nivel_acesso === 'admin' ? 'selected' : ''}>Admin</option>
                         </select>
@@ -548,4 +581,135 @@ function carregarGerenciarUsuarios() {
                 });
             });
         });
+}
+
+// Função para montar a tabela de estoque
+function montarTabelaEstoque(produtos) {
+    const tabela = document.getElementById('estoqueTabela');
+    if (!tabela) return;
+
+    if (!produtos.length) {
+        tabela.innerHTML = '<p style="text-align:center; color:var(--cor-principal); font-weight:600;">Nenhum produto cadastrado nesta loja.</p>';
+        return;
+    }
+
+    let html = `
+        <div class="estoque-tabela">
+            <div class="estoque-tabela-header">
+                <div>ID</div>
+                <div>SKU</div>
+                <div>Nome</div>
+                <div>Qtd</div>
+                <div>Fornecedor</div>
+                <div>Preço Compra</div>
+                <div>Preço Venda</div>
+                <div>Data Registro</div>
+            </div>
+            ${produtos.map(prod => `
+                <div class="estoque-tabela-row">
+                    <div><span class="estoque-label">ID:</span> ${prod.id_produto}</div>
+                    <div><span class="estoque-label">SKU:</span> ${prod.sku}</div>
+                    <div><span class="estoque-label">Nome:</span> ${prod.nome}</div>
+                    <div><span class="estoque-label">Qtd:</span> ${prod.quantidade}</div>
+                    <div><span class="estoque-label">Fornecedor:</span> ${prod.fornecedor}</div>
+                    <div><span class="estoque-label">Compra:</span> R$ ${Number(prod.preco_compra).toFixed(2)}</div>
+                    <div><span class="estoque-label">Venda:</span> R$ ${Number(prod.preco_venda).toFixed(2)}</div>
+                    <div><span class="estoque-label">Registro:</span> ${new Date(prod.data_registro).toLocaleDateString()}</div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+    tabela.innerHTML = html;
+}
+
+// Função para montar o seletor de loja
+function montarSeletorLoja(lojasUsuario, lojaSelecionadaId, onChange) {
+    const selector = document.getElementById('estoque-loja-selector');
+    if (!selector) return;
+
+    // IDs das lojas que o usuário pode acessar
+    const idsPermitidos = lojasUsuario.map(loja => loja.id);
+
+    // Lojas fixas do sistema
+    const lojasFixas = [
+        { id: 1, nome: 'Loja Principal', icone: 'fa-store' },
+        { id: 2, nome: 'Loja 1', icone: 'fa-shop' },
+        { id: 3, nome: 'Loja 2', icone: 'fa-shop' }
+    ];
+
+    // Monta os 3 botões
+    let botoes = lojasFixas.map(loja => {
+        const permitido = idsPermitidos.includes(loja.id);
+        let classe = 'loja-btn';
+        if (!permitido) {
+            classe += ' loja-btn-inativo';
+        } else if (lojaSelecionadaId === loja.id) {
+            classe += ' loja-btn-filtrada'; // roxo escuro (filtrada)
+        } else {
+            classe += ' loja-btn-ativo'; // roxo claro (permitida)
+        }
+        return `
+            <button 
+                class="${classe}" 
+                type="button" 
+                title="${loja.nome}" 
+                data-id="${loja.id}" 
+                ${!permitido ? 'disabled' : ''}
+            >
+                <i class="fa-solid ${loja.icone}"></i>
+            </button>
+        `;
+    }).join('');
+
+    selector.innerHTML = botoes;
+
+    // Clique: filtra ou desfaz filtro
+    selector.querySelectorAll('.loja-btn-ativo, .loja-btn-filtrada').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = Number(btn.getAttribute('data-id'));
+            if (lojaSelecionadaId === id) {
+                onChange(null); // desfaz filtro (mostra todas permitidas)
+            } else {
+                onChange(id); // filtra por loja
+            }
+        });
+    });
+}
+
+let lojasPermitidasGlobal = [];
+let lojaSelecionadaIdGlobal = null;
+
+function carregarEstoque() {
+    fetch('/api/estoque/lojas')
+        .then(res => res.json())
+        .then(lojasUsuario => {
+            lojasPermitidasGlobal = lojasUsuario.map(l => l.id);
+            lojaSelecionadaIdGlobal = null; // começa sem filtro
+            montarSeletorLoja(lojasUsuario, lojaSelecionadaIdGlobal, (novaLojaId) => {
+                lojaSelecionadaIdGlobal = novaLojaId;
+                montarSeletorLoja(lojasUsuario, lojaSelecionadaIdGlobal, arguments.callee);
+                carregarProdutosDaLoja(lojaSelecionadaIdGlobal);
+            });
+            carregarProdutosDaLoja(lojaSelecionadaIdGlobal);
+        });
+}
+
+function carregarProdutosDaLoja(lojaId) {
+    if (!lojaId) {
+        // Mostra todas as lojas permitidas
+        Promise.all(lojasPermitidasGlobal.map(id =>
+            fetch(`/api/estoque/produtos?loja=${id}`).then(res => res.json())
+        )).then(arrays => {
+            // Junta todos os produtos das lojas permitidas
+            const produtos = [].concat(...arrays);
+            montarTabelaEstoque(produtos);
+        });
+    } else {
+        // Mostra só a loja filtrada
+        fetch(`/api/estoque/produtos?loja=${lojaId}`)
+            .then(res => res.json())
+            .then(produtos => {
+                montarTabelaEstoque(produtos);
+            });
+    }
 }
