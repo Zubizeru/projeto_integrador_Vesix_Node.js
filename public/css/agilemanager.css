@@ -253,16 +253,23 @@ body .barra-lateral.minimizada+.conteudo {
     font-weight: 600;
     cursor: pointer;
     box-shadow: 0 2px 8px var(--sombra-leve);
-    transition: filter var(--duracao-transicao-curta);
+    transition: ease-in-out 0.2s;
 }
 
 .botao-adicionar-produto:hover {
-    filter: brightness(0.85);
+    background: var(--cor-secundaria);
+    color: var(----cor-texto);
 }
 
 body.escuro .botao-adicionar-produto {
-    background: var(----cor-texto);
+    background: var(--fundo-conteudo);
     color: var(--cor-hover);
+    transition: ease-in-out 0.2s;
+}
+
+body.escuro .botao-adicionar-produto:hover {
+    background: var(--cor-hover);
+    color: var(--texto-conteudo-escuro);
 }
 
 /* ======================= */
@@ -477,11 +484,16 @@ input[readonly] {
     margin-bottom: 12px;
 }
 
+body.escuro .subtitulo-secao {
+    color: var(--texto-conteudo-escuro);
+}
+
 .btnnolado {
     display: flex;
     align-items: center;
     gap: 16px;
-    flex-direction: row-reverse; /* Se quiser o botão à direita e os filtros à esquerda */
+    flex-direction: row-reverse;
+    /* Se quiser o botão à direita e os filtros à esquerda */
 }
 
 body.escuro .modal-adicionar {
@@ -640,7 +652,7 @@ body.escuro .solicitacoes-lista {
 .solicitacoes-header,
 .solicitacao-item {
     display: grid;
-    grid-template-columns: 1.2fr 1.7fr 1fr 1.2fr 1fr;
+    grid-template-columns: 1fr 1.8fr 1fr 1fr;
     align-items: center;
     gap: 10px;
     padding: 14px 18px;
@@ -772,6 +784,7 @@ body.escuro .solicitacao-item input {
     cursor: pointer;
     font-weight: 600;
     transition: background 0.2s;
+    margin-bottom: 10px;
 }
 
 /* ======================= */
@@ -819,7 +832,7 @@ body.escuro .solicitacao-item .lojas-checkbox-group label {
 }
 
 /* ======================= */
-/* ESTOQUE - TABELA RESPONSIVA */
+/* ESTOQUE                 */
 /* ======================= */
 .estoque-tabela {
     width: 100%;
@@ -831,11 +844,31 @@ body.escuro .solicitacao-item .lojas-checkbox-group label {
 .estoque-tabela-header,
 .estoque-tabela-row {
     display: grid;
-    grid-template-columns: 60px 1fr 1fr 1fr 1fr 1fr 1fr 1fr 120px 110px;
+    grid-template-columns: 35px
+        /* ID */
+        minmax(70px, 1fr)
+        /* SKU */
+        minmax(80px, 1fr)
+        /* Nome */
+        minmax(40px, 0.7fr)
+        /* Qtd */
+        minmax(100px, 1fr)
+        /* Fornecedor */
+        minmax(80px, 1fr)
+        /* Preço Compra */
+        minmax(80px, 1fr)
+        /* Preço Venda */
+        minmax(85px, 1fr)
+        /* Data Registro */
+        minmax(65px, 1fr)
+        /* Loja */
+        90px;
+    /* Ações */
+    grid-column-gap: 5px;
     align-items: center;
     background: var(--fundo-conteudo);
     border-radius: 8px;
-    padding: 5px 12px;
+    padding: 5px 6px;
     font-size: 1rem;
     min-height: 50px;
     color: var(--texto-conteudo);
@@ -891,6 +924,30 @@ body.escuro .estoque-tabela-row {
     margin-left: auto;
 }
 
+.estoque-tabela-row.estoque-loja-1 {
+    background: #f5f3fa;
+}
+
+.estoque-tabela-row.estoque-loja-2 {
+    background: #ede7f6;
+}
+
+.estoque-tabela-row.estoque-loja-3 {
+    background: #e1d7f0;
+}
+
+body.escuro .estoque-tabela-row.estoque-loja-1 {
+    background: #6c4f8c;
+}
+
+body.escuro .estoque-tabela-row.estoque-loja-2 {
+    background: #7e5fa8;
+}
+
+body.escuro .estoque-tabela-row.estoque-loja-3 {
+    background: #9170c2;
+}
+
 .loja-btn {
     width: 40px;
     height: 40px;
@@ -904,7 +961,7 @@ body.escuro .estoque-tabela-row {
     font-size: 1.3rem;
     cursor: pointer;
     transition: background 0.2s, color 0.2s;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     border: 2px solid var(--cor-principal, #704CAC);
 }
 
@@ -915,7 +972,8 @@ body.escuro .estoque-tabela-row {
 }
 
 .loja-btn-filtrada {
-    background: var(--cor-secundaria); /* roxo escuro */
+    background: var(--cor-secundaria);
+    /* roxo escuro */
     color: #fff;
     opacity: 1;
 }
@@ -941,74 +999,72 @@ body.escuro .estoque-tabela-row {
     font-size: 1.1rem;
     cursor: pointer;
     transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
     background: #f3f0fa;
     color: var(--cor-principal, #704CAC);
 }
 
-.btn-editar-produto:hover, .btn-deletar-produto:hover {
+.btn-editar-produto:hover,
+.btn-deletar-produto:hover {
     background: var(--cor-principal);
     color: #fff;
 }
 
-@media (max-width: 900px) {
-
-    .estoque-tabela-header,
-    .estoque-tabela-row {
-        grid-template-columns: 40px 1fr 1fr 1fr 1fr 1fr 1fr 100px;
-        font-size: 0.95rem;
-    }
+.estoque-tabela.modo-card .estoque-tabela-header {
+    display: none;
 }
 
-@media (max-width: 700px) {
-    .estoque-tabela-header {
-        display: none;
-    }
+.estoque-tabela.modo-card .estoque-tabela-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 10px;
+    font-size: 1rem;
+    flex-wrap: wrap;
+}
 
-    .estoque-tabela-row {
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: flex-start;
-        background: #fff;
-        border: 1px solid #eee;
-        border-radius: 8px;
-        padding: 12px;
-        margin-bottom: 10px;
-        font-size: 1rem;
-        flex-wrap: wrap;
-    }
+.estoque-tabela.modo-card .estoque-tabela-row>div {
+    margin-bottom: 4px;
+    flex: 1 1 45%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+}
 
-    .estoque-tabela-row > div {
-        margin-bottom: 4px;
-        flex: 1 1 45%;
-        display: flex;
-        flex-direction: row; 
-        align-items: center;
-        gap: 4px;
-    }
+.estoque-tabela.modo-card .estoque-tabela-row .estoque-label {
+    font-weight: bold;
+    color: var(--cor-principal, #704CAC);
+    margin-right: 2px;
+    display: inline;
+    min-width: unset;
+}
 
-    .estoque-tabela-row>div:nth-child(-n+4) {
-        /* Primeira coluna: ID, SKU, Nome, Qtd */
-        order: 1;
-    }
+.estoque-tabela.modo-card .estoque-label {
+    display: inline;
+}
 
-    .estoque-tabela-row>div:nth-child(n+5) {
-        /* Segunda coluna: Fornecedor, Compra, Venda, Registro */
-        order: 2;
-    }
+.estoque-tabela.modo-card .estoque-tabela-row.estoque-loja-1 {
+    box-shadow: inset 6px 0 0 0 #704cac;
+}
 
-    .estoque-tabela-row .estoque-label {
-        font-weight: bold;
-        color: var(--cor-principal, #704CAC);
-        margin-right: 2px;
-        display: inline;
-        min-width: unset;
-    }
+.estoque-tabela.modo-card .estoque-tabela-row.estoque-loja-2 {
+    box-shadow: inset 6px 0 0 0 #a05fd7;
+}
 
-    .estoque-label {
-        display: inline;
-    }
+.estoque-tabela.modo-card .estoque-tabela-row.estoque-loja-3 {
+    box-shadow: inset 6px 0 0 0 #c27ee1;
+}
+
+body.escuro .estoque-tabela.modo-card .estoque-tabela-row.estoque-loja-1,
+body.escuro .estoque-tabela.modo-card .estoque-tabela-row.estoque-loja-2,
+body.escuro .estoque-tabela.modo-card .estoque-tabela-row.estoque-loja-3 {
+    background: var(--fundo-conteudo-escuro);
 }
 
 /* Entrada - Filtros e Ações */
@@ -1086,13 +1142,16 @@ body.escuro .entrada-filtros select {
     justify-content: center;
     flex-direction: column;
 }
+
 .estoque-por-loja-lista ul {
     margin: 0;
     list-style: none;
 }
+
 .estoque-por-loja-lista li {
     margin-bottom: 4px;
 }
+
 body.escuro .estoque-por-loja-lista {
     background: var(--cor-secundaria);
     color: var(--texto-conteudo-escuro);
@@ -1123,35 +1182,16 @@ body.escuro #estoquePorLojaEntrada {
     box-shadow: 0 2px 8px var(--sombra-leve, #0001);
     font-size: 1rem;
 }
+
 body.escuro .entrada-form-container {
     background: var(--cor-secundaria);
     color: var(--texto-conteudo-escuro);
 }
+
 .entrada-form-row {
     margin-bottom: 12px;
     display: flex;
     flex-direction: column;
-}
-
-/* Cores diferentes para cada loja na tabela de estoque */
-.estoque-tabela-row.estoque-loja-1 {
-    background: #f5f3fa; /* Roxo bem claro */
-}
-.estoque-tabela-row.estoque-loja-2 {
-    background: #ede7f6; /* Roxo claro */
-}
-.estoque-tabela-row.estoque-loja-3 {
-    background: #e1d7f0; /* Roxo um pouco mais intenso, mas ainda suave */
-}
-
-body.escuro .estoque-tabela-row.estoque-loja-1 {
-    background: #6c4f8c;  /* Roxo claro */
-}
-body.escuro .estoque-tabela-row.estoque-loja-2 {
-    background: #7e5fa8;  /* Roxo médio */
-}
-body.escuro .estoque-tabela-row.estoque-loja-3 {
-    background: #9170c2;  /* Roxo ainda mais claro */
 }
 
 .entrada-form-acoes {
@@ -1159,6 +1199,7 @@ body.escuro .estoque-tabela-row.estoque-loja-3 {
     gap: 10px;
     margin-top: 10px;
 }
+
 .btn-entrada {
     background: var(--cor-principal, #6c63ff);
     color: #fff;
@@ -1169,6 +1210,7 @@ body.escuro .estoque-tabela-row.estoque-loja-3 {
     font-weight: 600;
     transition: background 0.2s;
 }
+
 .btn-entrada:hover {
     background: var(--cor-principal-hover, #554ee0);
 }
@@ -1178,14 +1220,22 @@ body.escuro .estoque-tabela-row.estoque-loja-3 {
     .entrada-container {
         padding: 10px;
     }
+
     .entrada-filtros {
         flex-direction: column;
         gap: 10px;
     }
+
     .entrada-acoes {
         flex-direction: column;
         align-items: stretch;
         gap: 8px;
+    }
+
+    .entrada-filtros label {
+        flex: none;
+        font-weight: 500;
+        color: var(--cor-principal);
     }
 }
 
@@ -1305,15 +1355,20 @@ body.escuro .estoque-tabela-row.estoque-loja-3 {
         padding: 3px 8px 3px 5px;
     }
 
-    .solicitacoes-header,
+    .solicitacoes-header {
+        display: none;
+    }
+
     .solicitacao-item {
-        grid-template-columns: 1fr 1.5fr 1fr;
+        display: grid;
+        grid-template-columns: 1fr minmax(226px, 1fr);
         grid-template-areas:
-            "nome email acoes"
-            "nivel lojas acoes";
+            "nome email"
+            "lojas acoes";
         gap: 8px;
         font-size: 0.95rem;
-        padding: 10px 6px;
+        padding: 10px 2px;
+        grid-gap: 3px;
     }
 
     .solicitacoes-header span:nth-child(3),

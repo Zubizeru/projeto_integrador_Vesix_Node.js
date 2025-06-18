@@ -380,7 +380,6 @@ function carregarSolicitacoes() {
         <div class="solicitacoes-header">
             <span>Nome</span>
             <span>Email</span>
-            <span>Nível</span>
             <span>Lojas</span>
             <span>Ações</span>
         </div>
@@ -391,12 +390,6 @@ function carregarSolicitacoes() {
                 <div class="solicitacao-item">
                     <span class="solicitacao-nome">${u.nome}</span>
                     <span class="solicitacao-email">${u.email}</span>
-                    <span>
-                        <select data-id="${u.id}" class="nivel-acesso">
-                            <option value="funcionario" ${u.nivel_acesso === 'funcionario' ? 'selected' : ''}>Funcionário</option>
-                            <option value="gerente" ${u.nivel_acesso === 'gerente' ? 'selected' : ''}>Gerente</option>
-                        </select>
-                    </span>
                     <span class="lojas-checkbox-group" data-id="${u.id}">
                         ${lojasFixas.map(loja => `
                             <label style="margin-right:10px;">
@@ -420,6 +413,14 @@ function carregarSolicitacoes() {
             tabela.querySelectorAll('.aprovar-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const id = btn.getAttribute('data-id');
+                    // Verifica se pelo menos uma loja está marcada
+                    const group = tabela.querySelector(`.lojas-checkbox-group[data-id="${id}"]`);
+                    const checkboxes = group.querySelectorAll('.loja-checkbox');
+                    const algumaMarcada = Array.from(checkboxes).some(cb => cb.checked);
+                    if (!algumaMarcada) {
+                        showToast('Selecione pelo menos uma loja para aprovar!');
+                        return;
+                    }
                     fetch(`/admin/usuarios/${id}/aprovar`, { method: 'POST' })
                         .then(res => res.json())
                         .then(() => carregarSolicitacoes());
@@ -502,31 +503,19 @@ function carregarGerenciarUsuarios() {
         <div class="solicitacoes-header">
             <span>Nome</span>
             <span>Email</span>
-            <span>Nível</span>
             <span>Lojas</span>
             <span>Ações</span>
         </div>
         ${usuarios.map(u => {
                 const lojasUsuario = u.lojas || [];
                 const isAdmin = u.nivel_acesso === 'admin';
-                const isGerente = u.nivel_acesso === 'gerente';
                 let cardClass = '';
                 if (isAdmin) cardClass = 'card-admin';
-                else if (isGerente) cardClass = 'card-gerente';
-                else cardClass = 'card-usuario';
+                else cardClass = 'card-gerente';
                 return `
                 <div class="solicitacao-item ${cardClass}">
                     <span class="solicitacao-nome">${u.nome}</span>
                     <span class="solicitacao-email">${u.email}</span>
-                        <span>
-                            ${isAdmin
-                        ? `<span>Admin</span>`
-                        : `<select data-id="${u.id}" class="nivel-acesso">
-                                        <option value="funcionario" ${u.nivel_acesso === 'funcionario' ? 'selected' : ''}>Funcionário</option>
-                                        <option value="gerente" ${u.nivel_acesso === 'gerente' ? 'selected' : ''}>Gerente</option>
-                                </select>`
-                    }
-                        </span>
                     <span class="lojas-checkbox-group" data-id="${u.id}">
                         ${lojasFixas.map(loja => `
                             <label style="margin-right:10px;">
@@ -572,7 +561,7 @@ function carregarGerenciarUsuarios() {
                 checkboxes.forEach(cb => cb.addEventListener('change', verificarMudanca));
                 if (selectNivel) selectNivel.addEventListener('change', verificarMudanca);
             });
-            
+
             tabela.querySelectorAll('.dispensar-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const id = btn.getAttribute('data-id');
@@ -683,26 +672,27 @@ function montarTabelaEstoque(produtos) {
                 <div>Loja</div>
                 <div>Ações</div>
             </div>
-            ${produtos.map(prod => `
-                <div class="estoque-tabela-row estoque-loja-${prod.id_loja}" data-id="${prod.id_produto}" data-estoque-id="${prod.id_estoque_loja}">
-                    <div>${prod.id_produto}</div>
-                    <div>${prod.sku}</div>
-                    <div>${prod.nome}</div>
-                    <div>${prod.quantidade}</div>
-                    <div>${prod.fornecedor}</div>
-                    <div>R$ ${Number(prod.preco_compra).toFixed(2)}</div>
-                    <div>R$ ${Number(prod.preco_venda).toFixed(2)}</div>
-                    <div>${new Date(prod.data_registro).toLocaleDateString()}</div>
-                    <div>${prod.loja_nome}</div>
-                    <div>
-                        <button class="btn-editar-produto" title="Editar"><i class="fas fa-edit"></i></button>
-                        <button class="btn-deletar-produto" title="Excluir"><i class="fas fa-trash"></i></button>
+                ${produtos.map(prod => `
+                    <div class="estoque-tabela-row estoque-loja-${prod.id_loja}" data-id="${prod.id_produto}" data-estoque-id="${prod.id_estoque_loja}">
+                        <div><span class="estoque-label">ID: </span>${prod.id_produto}</div>
+                        <div><span class="estoque-label">SKU: </span>${prod.sku}</div>
+                        <div><span class="estoque-label">Nome: </span>${prod.nome}</div>
+                        <div><span class="estoque-label">Qtd: </span>${prod.quantidade}</div>
+                        <div><span class="estoque-label">Fornecedor: </span>${prod.fornecedor}</div>
+                        <div><span class="estoque-label">Preço Compra: </span>R$ ${Number(prod.preco_compra).toFixed(2)}</div>
+                        <div><span class="estoque-label">Preço Venda: </span>R$ ${Number(prod.preco_venda).toFixed(2)}</div>
+                        <div><span class="estoque-label">Data Registro: </span>${new Date(prod.data_registro).toLocaleDateString()}</div>
+                        <div><span class="estoque-label">Loja: </span>${prod.loja_nome}</div>
+                        <div>
+                            <button class="btn-editar-produto" title="Editar"><i class="fas fa-edit"></i></button>
+                            <button class="btn-deletar-produto" title="Excluir"><i class="fas fa-trash"></i></button>
+                        </div>
                     </div>
-                </div>
-            `).join('')}
+                `).join('')}
         </div>
     `;
     tabela.innerHTML = html;
+    atualizarModoCardEstoque();
     tabela.querySelectorAll('.btn-deletar-produto').forEach(btn => {
         btn.addEventListener('click', function () {
             const row = btn.closest('.estoque-tabela-row');
@@ -724,12 +714,26 @@ function montarTabelaEstoque(produtos) {
         });
     });
 }
+
+function atualizarModoCardEstoque() {
+    const tabela = document.querySelector('.estoque-tabela');
+    if (!tabela) return;
+    if (tabela.offsetWidth <= 789) {
+        tabela.classList.add('modo-card');
+    } else {
+        tabela.classList.remove('modo-card');
+    }
+}
+
+window.addEventListener('resize', atualizarModoCardEstoque);
+window.addEventListener('DOMContentLoaded', atualizarModoCardEstoque);
+
 function montarSeletorLoja(lojasUsuario, lojaSelecionadaId, onChange) {
     const selector = document.getElementById('estoque-loja-selector');
     if (!selector) return;
     const idsPermitidos = lojasUsuario.map(loja => loja.id);
     const lojasFixas = [
-        { id: 1, nome: 'Loja Principal', icone: 'fa-store' },
+        { id: 1, nome: 'Loja Principal', icone: 'fa-shop' },
         { id: 2, nome: 'Loja 1', icone: 'fa-shop' },
         { id: 3, nome: 'Loja 2', icone: 'fa-shop' }
     ];

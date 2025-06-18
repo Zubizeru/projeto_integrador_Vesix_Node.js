@@ -195,18 +195,16 @@ document.addEventListener('DOMContentLoaded', () => {
             })
                 .then(res => res.json())
                 .then(data => {
-
                     if (data.success) {
-                        alert(data.message);
+                        showToast(data.message); // Mostra mensagem de sucesso no toast
                         cadastroForm.reset();
                         document.querySelectorAll('.input-box input').forEach(input => input.classList.remove('filled'));
                     } else {
-                        alert(data.error || 'Erro ao cadastrar.');
+                        showToast(data.error || 'Erro ao cadastrar.'); // Mostra erro no toast
                     }
                 })
                 .catch(() => {
-
-                    alert('Erro ao cadastrar.');
+                    showToast('Erro ao cadastrar.'); // Mostra erro no toast
                 });
         }
     });
