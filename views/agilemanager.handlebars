@@ -75,11 +75,27 @@
         <div id="secaoSaida" class="secao-conteudo">
             <h1 class="titulosecao">Saída</h1>
             <p class="subtitulo-secao">Registre saídas de produtos.</p>
+            <div class="saida-container">
+                <div class="saida-filtros">
+                    <label>
+                        Loja:
+                        <select id="saida-loja"></select>
+                    </label>
+                    <label>
+                        Produto:
+                        <select id="saida-produto"></select>
+                    </label>
+                </div>
+                <div class="saida-acoes">
+                    <button id="btn-registrar-saida" class="btn-entrada">Registrar Saída</button>
+                </div>
+            </div>
+            <div id="saidaFormContainer" class="entrada-form-container"></div>
         </div>
         <div id="secaoSolicitacoes" class="secao-conteudo">
             <h1 class="titulosecao">Solicitações de Cadastro</h1>
             <p class="subtitulo-secao">Gerencie novos acessos</p>
-            <div class="btnnolado">
+            <div class="btnnoladosolicitacao">
                 <button class="botao-gerenciarusuario">Gerenciar Usuários</button>
             </div>
             <div id="tabelaSolicitacoes">

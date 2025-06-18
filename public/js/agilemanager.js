@@ -311,6 +311,7 @@ for (let item of opcoesMenu) {
                 break;
             case 'saida':
                 mostrarSecao('secaoSaida');
+                carregarSaida();
                 break;
             case 'solicitacoes':
                 mostrarSecao('secaoSolicitacoes');
@@ -874,8 +875,12 @@ function carregarProdutosEntrada(lojaId) {
                         '<p style="color:var(--cor-principal);margin:8px 0;">Selecione um produto para verificar o estoque por loja.</p>';
                 }
             };
+
+            const entradaFormContainer = document.querySelector('#entradaFormContainer');
+            if (entradaFormContainer) entradaFormContainer.innerHTML = '';
         });
 }
+
 function mostrarEstoquePorLoja(id_produto) {
     fetch(`/api/estoque/produto/${id_produto}/por-loja`)
         .then(res => res.json())
@@ -1048,15 +1053,148 @@ function atualizarLabelFlutuanteEntrada() {
 
 // Eventos dos botões principais
 if (btnRegistrarEntrada) {
-    btnRegistrarEntrada.addEventListener('click', () => {
+    btnRegistrarEntrada.addEventListener('click', (e) => {
+        const selectLoja = document.querySelector('#entrada-loja-origem');
+        const selectProd = document.querySelector('#entrada-produto');
+        if (!selectLoja.value || !selectProd.value) {
+            showToast('Selecione Loja de Origem e Produto!');
+            e.preventDefault();
+            return;
+        }
         renderizarFormEntrada('entrada');
     });
 }
 if (btnTransferirEntrada) {
-    btnTransferirEntrada.addEventListener('click', () => {
+    btnTransferirEntrada.addEventListener('click', (e) => {
+        const selectLoja = document.querySelector('#entrada-loja-origem');
+        const selectProd = document.querySelector('#entrada-produto');
+        if (!selectLoja.value || !selectProd.value) {
+            showToast('Selecione Loja de Origem e Produto!');
+            e.preventDefault();
+            return;
+        }
         renderizarFormEntrada('transferencia');
     });
 }
+
+// ==============================
+// 11. CARREGAR SAIDAS
+// ==============================
+function carregarSaida() {
+    // Limpa o formulário
+    document.getElementById('saidaFormContainer').innerHTML = '';
+    // Carrega lojas
+    fetch('/api/estoque/lojas')
+        .then(res => res.json())
+        .then(lojas => {
+            const selectLoja = document.getElementById('saida-loja');
+            selectLoja.innerHTML = '<option value="" disabled selected hidden>Selecione</option>' +
+                lojas.map(l => `<option value="${l.id}">${l.nome}</option>`).join('');
+            selectLoja.onchange = function () {
+                carregarProdutosSaida(this.value);
+                // Limpa o formulário ao trocar de loja
+                document.getElementById('saidaFormContainer').innerHTML = '';
+            };
+            // Limpa produtos ao trocar loja
+            document.getElementById('saida-produto').innerHTML = '<option value="" disabled selected hidden>Selecione</option>';
+        });
+}
+
+function carregarProdutosSaida(lojaId) {
+    fetch(`/api/estoque/produtos?loja=${lojaId}`)
+        .then(res => res.json())
+        .then(produtos => {
+            const selectProd = document.getElementById('saida-produto');
+            selectProd.innerHTML = '<option value="" disabled selected hidden>Selecione</option>' +
+                produtos.map(p => `<option value="${p.id_estoque_loja}" data-id-produto="${p.id_produto}">${p.nome} (SKU: ${p.sku})</option>`).join('');
+            // Adiciona o evento para sumir o formulário ao trocar produto
+            selectProd.onchange = function () {
+                if (!selectProd.value) {
+                    document.getElementById('saidaFormContainer').innerHTML = '';
+                }
+            };
+        });
+}
+
+// Renderiza o formulário de saída
+function renderizarFormSaida() {
+    const saidaFormContainer = document.getElementById('saidaFormContainer');
+    saidaFormContainer.innerHTML = `
+        <form class="entrada-container" id="formSaida" autocomplete="off">
+            <div class="modal-campo">
+                <input type="number" id="saidaQuantidade" name="quantidade" min="1" placeholder=" " required>
+                <label for="saidaQuantidade">Quantidade</label>
+            </div>
+            <div class="entrada-form-acoes">
+                <button type="submit" class="btn-entrada" id="confirmarSaida">Confirmar</button>
+                <button type="button" class="btn-entrada" id="cancelarSaida">Cancelar</button>
+            </div>
+        </form>
+    `;
+    adicionarListenersFormSaida();
+}
+
+// Listeners do formulário de saída
+function adicionarListenersFormSaida() {
+    const formSaida = document.getElementById('formSaida');
+    const cancelarSaida = document.getElementById('cancelarSaida');
+    if (cancelarSaida) {
+        cancelarSaida.addEventListener('click', () => {
+            document.getElementById('saidaFormContainer').innerHTML = '';
+        });
+    }
+    if (formSaida) {
+        formSaida.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const selectLoja = document.getElementById('saida-loja');
+            const selectProd = document.getElementById('saida-produto');
+            const idLoja = selectLoja && selectLoja.value ? selectLoja.value : null;
+            const idEstoque = selectProd && selectProd.value ? selectProd.value : null;
+            if (!idLoja) {
+                showToast('Selecione a loja!');
+                return;
+            }
+            if (!idEstoque) {
+                showToast('Selecione um produto!');
+                return;
+            }
+            const quantidade = Number(formSaida.quantidade.value);
+            fetch('/api/estoque/saida', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ idEstoque, quantidade })
+            })
+                .then(res => res.json())
+                .then(resposta => {
+                    if (resposta.sucesso) {
+                        showToast('Saída registrada!');
+                        document.getElementById('saidaFormContainer').innerHTML = '';
+                        carregarProdutosSaida(idLoja);
+                    } else {
+                        showToast(resposta.erro || 'Erro ao registrar saída.');
+                    }
+                });
+        });
+    }
+}
+
+// Evento do botão principal
+document.addEventListener('DOMContentLoaded', function () {
+    const btnRegistrarSaida = document.getElementById('btn-registrar-saida');
+    if (btnRegistrarSaida) {
+        btnRegistrarSaida.addEventListener('click', function (e) {
+            const selectLoja = document.getElementById('saida-loja');
+            const selectProd = document.getElementById('saida-produto');
+            if (!selectLoja.value || !selectProd.value) {
+                showToast('Selecione Loja e Produto!');
+                e.preventDefault();
+                return;
+            }
+            renderizarFormSaida();
+        });
+    }
+});
+
 
 // ==============================
 // 11. LOGOUT COM CONFIRMAÇÃO

@@ -470,6 +470,24 @@ app.get('/api/estoque/produto/:id_produto/por-loja', (req, res) => {
     );
 });
 
+// Registrar saída de produto (baixar quantidade em estoque_loja)
+app.post('/api/estoque/saida', (req, res) => {
+    const { idEstoque, quantidade } = req.body;
+    if (!idEstoque || !quantidade || quantidade <= 0) {
+        return res.status(400).json({ sucesso: false, erro: 'Dados inválidos.' });
+    }
+    db.query('SELECT quantidade FROM estoque_loja WHERE id = ?', [idEstoque], (err, rows) => {
+        if (err || !rows.length) return res.status(400).json({ sucesso: false, erro: 'Estoque não encontrado.' });
+        if (rows[0].quantidade < quantidade) {
+            return res.status(400).json({ sucesso: false, erro: 'Quantidade insuficiente em estoque.' });
+        }
+        db.query('UPDATE estoque_loja SET quantidade = quantidade - ? WHERE id = ?', [quantidade, idEstoque], (err2) => {
+            if (err2) return res.status(500).json({ sucesso: false, erro: 'Erro ao registrar saída.' });
+            res.json({ sucesso: true });
+        });
+    });
+});
+
 // ==============================
 // INICIALIZAÇÃO DO SERVIDOR
 // ==============================
