@@ -302,23 +302,201 @@ app.get('/api/estoque/lojas', (req, res) => {
 
 // 2. Produtos da loja
 app.get('/api/estoque/produtos', (req, res) => {
+    const estoqueId = req.query.estoque_id;
     const lojaId = req.query.loja;
-    db.query(
-        `SELECT 
+
+    let sql = `
+        SELECT 
             p.id_produto, p.sku, p.nome, 
             el.quantidade, 
             f.nome as fornecedor, 
             p.preco_compra, 
             el.preco_venda, 
-            el.data_registro
+            el.data_registro,
+            l.nome as loja_nome,
+            el.id_loja,
+            el.id as id_estoque_loja
         FROM estoque_loja el
         INNER JOIN Produto p ON p.id_produto = el.id_produto
         LEFT JOIN Fornecedor f ON f.id_fornecedor = p.id_fornecedor
-        WHERE el.id_loja = ?
-        ORDER BY el.data_registro DESC`,
-        [lojaId],
+        INNER JOIN loja l ON l.id = el.id_loja
+    `;
+    let params = [];
+
+    if (estoqueId) {
+        sql += ' WHERE el.id = ?';
+        params.push(estoqueId);
+    } else if (lojaId) {
+        sql += ' WHERE el.id_loja = ?';
+        params.push(lojaId);
+    }
+
+    sql += ' ORDER BY el.data_registro DESC';
+
+    db.query(sql, params, (err, rows) => {
+        if (err) return res.status(500).json([]);
+        res.json(rows);
+    });
+});
+
+app.put('/api/estoque/produtos/:id_estoque', (req, res) => {
+    const idEstoque = req.params.id_estoque;
+    const { nome, sku, precoCompra, fornecedor, localizacao, quantidade, precoVenda } = req.body;
+
+    // Busca o id_produto e id_fornecedor atuais
+    db.query(
+        `SELECT el.id_produto, p.id_fornecedor 
+         FROM estoque_loja el 
+         INNER JOIN Produto p ON p.id_produto = el.id_produto 
+         WHERE el.id = ?`,
+        [idEstoque],
         (err, rows) => {
-            if (err) return res.status(500).json([]);
+            if (err || !rows.length) return res.status(500).json({ sucesso: false, erro: 'Produto não encontrado.' });
+
+            const id_produto = rows[0].id_produto;
+
+            // Atualiza fornecedor se necessário (ou cria novo se não existir)
+            db.query('SELECT id_fornecedor FROM Fornecedor WHERE nome = ?', [fornecedor], (errF, fornRows) => {
+                if (errF) return res.status(500).json({ sucesso: false, erro: 'Erro ao buscar fornecedor.' });
+
+                function atualizarProduto(id_fornecedor, id_loja) {
+                    // Atualiza Produto
+                    db.query(
+                        'UPDATE Produto SET nome=?, sku=?, preco_compra=?, id_fornecedor=? WHERE id_produto=?',
+                        [nome, sku, precoCompra, id_fornecedor, id_produto],
+                        (err2) => {
+                            if (err2) return res.status(500).json({ sucesso: false, erro: 'Erro ao atualizar produto.' });
+
+                            // Atualiza estoque_loja
+                            db.query(
+                                'UPDATE estoque_loja SET quantidade=?, preco_venda=?, id_loja=? WHERE id=?',
+                                [quantidade, precoVenda, id_loja, idEstoque],
+                                (err3) => {
+                                    if (err3) return res.status(500).json({ sucesso: false, erro: 'Erro ao atualizar estoque.' });
+                                    res.json({ sucesso: true });
+                                }
+                            );
+                        }
+                    );
+                }
+
+                // Busca o id da loja pelo nome (localizacao)
+                db.query('SELECT id FROM loja WHERE nome = ?', [localizacao], (errL, lojaRows) => {
+                    if (errL || lojaRows.length === 0) return res.status(500).json({ sucesso: false, erro: 'Loja não encontrada.' });
+                    const id_loja = lojaRows[0].id;
+
+                    if (fornRows.length > 0) {
+                        atualizarProduto(fornRows[0].id_fornecedor, id_loja);
+                    } else {
+                        // Cria novo fornecedor básico se não existir
+                        db.query('INSERT INTO Fornecedor (nome, cnpj, contato) VALUES (?, "", "")', [fornecedor], (err2, result) => {
+                            if (err2) return res.status(500).json({ sucesso: false, erro: 'Erro ao inserir fornecedor.' });
+                            atualizarProduto(result.insertId, id_loja);
+                        });
+                    }
+                });
+            });
+        }
+    );
+});
+
+// Registrar entrada de produto (aumentar quantidade em estoque_loja)
+app.post('/api/estoque/entrada', (req, res) => {
+    const { idEstoque, quantidade } = req.body;
+    const usuario_id = req.session.usuario_id;
+    if (!idEstoque || !quantidade || quantidade <= 0) {
+        return res.status(400).json({ sucesso: false, erro: 'Dados inválidos.' });
+    }
+    db.query(
+        'UPDATE estoque_loja SET quantidade = quantidade + ? WHERE id = ?',
+        [quantidade, idEstoque],
+        (err, result) => {
+            if (err) return res.status(500).json({ sucesso: false, erro: 'Erro ao registrar entrada.' });
+
+            // Busca dados para registrar no histórico
+            db.query('SELECT id_produto, id_loja FROM estoque_loja WHERE id = ?', [idEstoque], (err2, rows) => {
+                if (err2 || !rows.length) return res.json({ sucesso: true }); // estoque atualizado, mas não registrou histórico
+                const { id_produto, id_loja } = rows[0];
+                db.query(
+                    'INSERT INTO Entrada_Estoque (id_produto, id_fornecedor, data_entrada, quantidade, usuario_id) VALUES (?, NULL, NOW(), ?, ?)',
+                    [id_produto, quantidade, usuario_id],
+                    () => res.json({ sucesso: true }) // sempre responde sucesso, mesmo se falhar o histórico
+                );
+            });
+        }
+    );
+});
+
+// Transferir produto de uma loja para outra
+app.post('/api/estoque/transferencia', (req, res) => {
+    const { idEstoque, quantidade, lojaDestino } = req.body;
+    const usuario_id = req.session.usuario_id;
+    if (!idEstoque || !quantidade || quantidade <= 0 || !lojaDestino) {
+        return res.status(400).json({ sucesso: false, erro: 'Dados inválidos.' });
+    }
+
+    db.query('SELECT id_produto, id_loja FROM estoque_loja WHERE id = ?', [idEstoque], (err, rows) => {
+        if (err || !rows.length) return res.status(400).json({ sucesso: false, erro: 'Estoque de origem não encontrado.' });
+        const { id_produto, id_loja } = rows[0];
+
+        db.query('SELECT quantidade, preco_venda FROM estoque_loja WHERE id = ?', [idEstoque], (err2, rows2) => {
+            if (err2 || !rows2.length) return res.status(400).json({ sucesso: false, erro: 'Estoque não encontrado.' });
+            if (rows2[0].quantidade < quantidade) {
+                return res.status(400).json({ sucesso: false, erro: 'Quantidade insuficiente para transferência.' });
+            }
+            const preco_venda = rows2[0].preco_venda;
+
+            // Remove do estoque origem
+            db.query('UPDATE estoque_loja SET quantidade = quantidade - ? WHERE id = ?', [quantidade, idEstoque], (err3) => {
+                if (err3) return res.status(500).json({ sucesso: false, erro: 'Erro ao debitar estoque de origem.' });
+
+                // Verifica se já existe estoque_loja para o produto na loja destino
+                db.query('SELECT id FROM estoque_loja WHERE id_produto = ? AND id_loja = ?', [id_produto, lojaDestino], (err4, rows4) => {
+                    if (err4) return res.status(500).json({ sucesso: false, erro: 'Erro ao buscar estoque destino.' });
+
+                    const finalizar = () => {
+                        // Registra no histórico de movimentação
+                        db.query(
+                            'INSERT INTO Movimentacao_Loja (id_produto, id_loja_origem, id_loja_destino, data_movimentacao, quantidade, usuario_id) VALUES (?, ?, ?, NOW(), ?, ?)',
+                            [id_produto, id_loja, lojaDestino, quantidade, usuario_id],
+                            () => {} // Não precisa esperar
+                        );
+                        res.json({ sucesso: true });
+                    };
+
+                    if (rows4.length > 0) {
+                        // Já existe: soma a quantidade
+                        db.query('UPDATE estoque_loja SET quantidade = quantidade + ? WHERE id = ?', [quantidade, rows4[0].id], (err5) => {
+                            if (err5) return res.status(500).json({ sucesso: false, erro: 'Erro ao creditar estoque destino.' });
+                            finalizar();
+                        });
+                    } else {
+                        // Não existe: cria novo registro
+                        db.query(
+                            'INSERT INTO estoque_loja (id_produto, id_loja, quantidade, preco_venda) VALUES (?, ?, ?, ?)',
+                            [id_produto, lojaDestino, quantidade, preco_venda],
+                            (err6) => {
+                                if (err6) return res.status(500).json({ sucesso: false, erro: 'Erro ao criar estoque destino.' });
+                                finalizar();
+                            }
+                        );
+                    }
+                });
+            });
+        });
+    });
+});
+
+app.get('/api/estoque/produto/:id_produto/por-loja', (req, res) => {
+    const { id_produto } = req.params;
+    db.query(
+        `SELECT el.quantidade, l.nome AS loja_nome
+         FROM estoque_loja el
+         INNER JOIN loja l ON l.id = el.id_loja
+         WHERE el.id_produto = ?`,
+        [id_produto],
+        (err, rows) => {
+            if (err) return res.status(500).json({ erro: 'Erro ao buscar estoque por loja.' });
             res.json(rows);
         }
     );

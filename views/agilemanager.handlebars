@@ -47,6 +47,24 @@
         <div id="secaoEntrada" class="secao-conteudo">
             <h1 class="titulosecao">Entrada</h1>
             <p class="subtitulo-secao">Registre entradas de produtos.</p>
+            <div class="entrada-container">
+                <div class="entrada-filtros">
+                    <label>
+                        Loja de Origem:
+                        <select id="entrada-loja-origem"></select>
+                    </label>
+                    <label>
+                        Produto:
+                        <select id="entrada-produto"></select>
+                    </label>
+                </div>
+                <div class="entrada-acoes">
+                    <button id="btn-registrar-entrada" class="btn-entrada">Registrar Entrada</button>
+                    <button id="btn-transferir-entrada" class="btn-entrada">Transferir para outra loja</button>
+                </div>
+            </div>
+            <div id="estoquePorLojaEntrada"></div>
+            <div id="entradaFormContainer" class="entrada-form-container"></div>
         </div>
         <div id="secaoSaida" class="secao-conteudo">
             <h1 class="titulosecao">Saída</h1>

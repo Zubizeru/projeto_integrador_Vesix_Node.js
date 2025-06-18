@@ -1,5 +1,5 @@
 // ==============================
-// ELEMENTOS PRINCIPAIS DA INTERFACE
+// 1. VARIÁVEIS E ELEMENTOS GLOBAIS
 // ==============================
 const barraLateral = document.querySelector('#barraLateral');
 const botaoMenu = document.querySelector('#botaoMenu');
@@ -14,157 +14,22 @@ const botaoFecharModal = document.querySelector('#botaoFecharModal');
 const botaoCancelarModal = document.querySelector('#botaoCancelarModal');
 const formularioAdicionarProduto = document.querySelector('#formularioAdicionarProduto');
 const botaoGerenciarUsuario = document.querySelector('.botao-gerenciarusuario');
+const selectLocalizacao = document.getElementById('localizacao');
+let tipoEntrada = null;
 
 // ==============================
-// MODAL DE PRODUTO
+// 2. FUNÇÕES GERAIS E UTILITÁRIOS
 // ==============================
-if (botaoAbrirModal) {
-    botaoAbrirModal.addEventListener('click', () => {
-        sobreposicaoModal.style.display = 'flex';
-    });
-}
-sobreposicaoModal.addEventListener('click', (e) => {
-    if (e.target === sobreposicaoModal) {
-        sobreposicaoModal.style.display = 'none';
-    }
-});
-
-// ==============================
-// MENU LATERAL E SEÇÕES
-// ==============================
-function ativarMenu(li) {
-    for (let item of opcoesMenu) {
-        item.classList.remove('ativo');
-    }
-    li.classList.add('ativo');
+function showToast(message) {
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+    toast.textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 2500);
 }
 
-function mostrarSecao(secaoId) {
-    const secoes = [
-        'secaoDashboard',
-        'secaoEstoque',
-        'secaoMovimentacao',
-        'secaoEntrada',
-        'secaoSaida',
-        'secaoSolicitacoes'
-    ];
-    secoes.forEach(id => {
-        const secao = document.getElementById(id);
-        if (secao) {
-            secao.classList.toggle('ativo', id === secaoId);
-        }
-    });
-}
-
-for (let item of opcoesMenu) {
-    item.addEventListener('click', function () {
-        ativarMenu(this);
-        const conteudo = this.getAttribute('data-conteudo');
-        switch (conteudo) {
-            case 'dashboard':
-                mostrarSecao('secaoDashboard');
-                break;
-            case 'estoque':
-                mostrarSecao('secaoEstoque');
-                carregarEstoque();
-                break;
-            case 'movimentacao':
-                mostrarSecao('secaoMovimentacao');
-                break;
-            case 'entrada':
-                mostrarSecao('secaoEntrada');
-                break;
-            case 'saida':
-                mostrarSecao('secaoSaida');
-                break;
-            case 'solicitacoes':
-                mostrarSecao('secaoSolicitacoes');
-                carregarSolicitacoes();
-                break;
-        }
-    });
-}
-
-// ==============================
-// GERENCIAR USUÁRIOS
-// ==============================
-if (botaoGerenciarUsuario) {
-    botaoGerenciarUsuario.addEventListener('click', function () {
-        if (botaoGerenciarUsuario.classList.contains('botao-gerenciarusuario')) {
-            // Vai para gerenciamento de usuários
-            mostrarSecao('secaoSolicitacoes');
-            carregarGerenciarUsuarios();
-            botaoGerenciarUsuario.textContent = 'Ver Solicitações';
-            botaoGerenciarUsuario.classList.remove('botao-gerenciarusuario');
-            botaoGerenciarUsuario.classList.add('botao-versolicitacao');
-        } else {
-            // Volta para solicitações pendentes
-            mostrarSecao('secaoSolicitacoes');
-            carregarSolicitacoes();
-            botaoGerenciarUsuario.textContent = 'Gerenciar Usuários';
-            botaoGerenciarUsuario.classList.remove('botao-versolicitacao');
-            botaoGerenciarUsuario.classList.add('botao-gerenciarusuario');
-        }
-    });
-}
-
-// ==============================
-// RESPONSIVIDADE E MENU
-// ==============================
-function ehMobile() {
-    return window.innerWidth <= 768;
-}
-
-function atualizarEstadoBarraLateral() {
-    if (ehMobile()) {
-        barraLateral.classList.remove('minimizada');
-        botaoMenu.style.display = 'none';
-        logo.style.opacity = '1';
-        logo.style.visibility = 'visible';
-    } else {
-        botaoMenu.style.display = 'flex';
-    }
-}
-
-botaoMenu.addEventListener('click', function (e) {
-    e.stopPropagation();
-    if (!ehMobile()) {
-        barraLateral.classList.toggle('minimizada');
-    }
-});
-window.addEventListener('resize', atualizarEstadoBarraLateral);
-window.addEventListener('DOMContentLoaded', atualizarEstadoBarraLateral);
-
-botaoMenu.addEventListener('click', function () {
-    if (barraLateral.classList.contains('minimizada')) {
-        logo.style.opacity = '0';
-        logo.style.visibility = 'hidden';
-    } else {
-        logo.style.opacity = '1';
-        logo.style.visibility = 'visible';
-    }
-});
-
-// ==============================
-// TEMA CLARO/ESCURO
-// ==============================
-botaoTema.addEventListener('click', function () {
-    document.body.classList.toggle('escuro');
-    const icone = botaoTema.querySelector('i');
-    if (document.body.classList.contains('escuro')) {
-        icone.classList.remove('fa-moon');
-        icone.classList.add('fa-sun');
-        botaoTema.querySelector('span').textContent = 'Tema Claro';
-    } else {
-        icone.classList.remove('fa-sun');
-        icone.classList.add('fa-moon');
-        botaoTema.querySelector('span').textContent = 'Tema Escuro';
-    }
-});
-
-// ==============================
-// TOAST DE CONFIRMAÇÃO
-// ==============================
 function showToastConfirm(msg, onConfirm) {
     const toast = document.getElementById('toastConfirm');
     if (!toast) return;
@@ -191,34 +56,120 @@ function showToastConfirm(msg, onConfirm) {
     };
 }
 
-function showToast(message) {
-    const toast = document.getElementById('toast');
-    if (!toast) return;
-    toast.textContent = message;
-    toast.classList.add('show');
-    setTimeout(() => {
-        toast.classList.remove('show');
-    }, 2500);
+function ativarMenu(li) {
+    for (let item of opcoesMenu) {
+        item.classList.remove('ativo');
+    }
+    li.classList.add('ativo');
+}
+
+function mostrarSecao(secaoId) {
+    const secoes = [
+        'secaoDashboard',
+        'secaoEstoque',
+        'secaoMovimentacao',
+        'secaoEntrada',
+        'secaoSaida',
+        'secaoSolicitacoes'
+    ];
+    secoes.forEach(id => {
+        const secao = document.getElementById(id);
+        if (secao) {
+            secao.classList.toggle('ativo', id === secaoId);
+        }
+    });
+}
+
+function ehMobile() {
+    return window.innerWidth <= 768;
+}
+
+function atualizarEstadoBarraLateral() {
+    if (ehMobile()) {
+        barraLateral.classList.remove('minimizada');
+        botaoMenu.style.display = 'none';
+        logo.style.opacity = '1';
+        logo.style.visibility = 'visible';
+    } else {
+        botaoMenu.style.display = 'flex';
+    }
 }
 
 // ==============================
-// LOGOUT COM CONFIRMAÇÃO
+// 3. TEMA CLARO/ESCURO
 // ==============================
-botaoLogout.addEventListener('click', function () {
-    showToastConfirm('Tem certeza que deseja sair?', function (confirmado) {
-        if (confirmado) {
-            window.location.href = '/login';
-        }
-    });
+botaoTema.addEventListener('click', function () {
+    document.body.classList.toggle('escuro');
+    const icone = botaoTema.querySelector('i');
+    if (document.body.classList.contains('escuro')) {
+        icone.classList.remove('fa-moon');
+        icone.classList.add('fa-sun');
+        botaoTema.querySelector('span').textContent = 'Tema Claro';
+    } else {
+        icone.classList.remove('fa-sun');
+        icone.classList.add('fa-moon');
+        botaoTema.querySelector('span').textContent = 'Tema Escuro';
+    }
 });
 
 // ==============================
-// MODAL PRODUTO - ERROS E VALIDAÇÃO
+// 4. LABEL FLUTUANTE DO SELECT LOCALIZAÇÃO
 // ==============================
+function atualizarClasseFilledSelectLocalizacao() {
+    if (!selectLocalizacao) return;
+    if (selectLocalizacao.value && selectLocalizacao.value !== '') {
+        selectLocalizacao.classList.add('filled');
+    } else {
+        selectLocalizacao.classList.remove('filled');
+    }
+}
+document.addEventListener('DOMContentLoaded', function () {
+    atualizarClasseFilledSelectLocalizacao();
+    if (selectLocalizacao) {
+        selectLocalizacao.addEventListener('change', atualizarClasseFilledSelectLocalizacao);
+    }
+});
+
+// ==============================
+// 5. MODAL DE PRODUTO (Adicionar/Editar)
+// ==============================
+if (botaoAbrirModal) {
+    botaoAbrirModal.addEventListener('click', () => {
+        sobreposicaoModal.style.display = 'flex';
+        if (formularioAdicionarProduto) formularioAdicionarProduto.reset();
+        atualizarClasseFilledSelectLocalizacao();
+        document.querySelector('.modal-adicionar').textContent = 'Adicionar';
+        formularioAdicionarProduto.removeAttribute('data-editar');
+        document.getElementById('quantidade').removeAttribute('readonly');
+    });
+}
+if (botaoCancelarModal) {
+    botaoCancelarModal.addEventListener('click', () => {
+        if (formularioAdicionarProduto) formularioAdicionarProduto.reset();
+        atualizarClasseFilledSelectLocalizacao();
+        limparTodosErrosProduto();
+        sobreposicaoModal.style.display = 'none';
+    });
+}
+if (botaoFecharModal) {
+    botaoFecharModal.addEventListener('click', () => {
+        if (formularioAdicionarProduto) formularioAdicionarProduto.reset();
+        atualizarClasseFilledSelectLocalizacao();
+        limparTodosErrosProduto();
+        sobreposicaoModal.style.display = 'none';
+    });
+}
+sobreposicaoModal.addEventListener('click', (e) => {
+    if (e.target === sobreposicaoModal) {
+        if (formularioAdicionarProduto) formularioAdicionarProduto.reset();
+        atualizarClasseFilledSelectLocalizacao();
+        limparTodosErrosProduto();
+        sobreposicaoModal.style.display = 'none';
+    }
+});
 const camposProduto = formularioAdicionarProduto
     ? formularioAdicionarProduto.querySelectorAll('input, select')
     : [];
-
 function mostrarErroProduto(input, mensagem) {
     let parent = input.parentElement;
     let errorElement = parent.querySelector('.error-message');
@@ -231,14 +182,15 @@ function mostrarErroProduto(input, mensagem) {
     input.classList.add('erro', 'bounce');
     setTimeout(() => input.classList.remove('bounce'), 750);
 }
-
 function limparErroProduto(input) {
     let parent = input.parentElement;
     let errorElement = parent.querySelector('.error-message');
     if (errorElement) errorElement.textContent = '';
     input.classList.remove('erro');
 }
-
+function limparTodosErrosProduto() {
+    camposProduto.forEach(limparErroProduto);
+}
 if (formularioAdicionarProduto) {
     formularioAdicionarProduto.addEventListener('submit', function (e) {
         e.preventDefault();
@@ -261,72 +213,153 @@ if (formularioAdicionarProduto) {
                 quantidade: formularioAdicionarProduto.quantidade.value,
                 precoVenda: formularioAdicionarProduto.precoVenda.value
             };
-
-            fetch('/produtos', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(dados)
-            })
-                .then(res => res.json())
-                .then(resposta => {
-                    if (resposta.sucesso) {
-                        formularioAdicionarProduto.reset();
-                        camposProduto.forEach(limparErroProduto);
-                        sobreposicaoModal.style.display = 'none';
-                        carregarEstoque();
-                    } else {
-                        showToast(resposta.erro || 'Erro ao cadastrar produto.', null);
-                    }
+            const idEstoqueEditar = formularioAdicionarProduto.getAttribute('data-editar');
+            if (idEstoqueEditar) {
+                fetch(`/api/estoque/produtos/${idEstoqueEditar}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dados)
                 })
-                .catch(() => {
-                    showToast('Erro de comunicação com o servidor.', null);
-                });
+                    .then(res => res.json())
+                    .then(resposta => {
+                        if (resposta.sucesso) {
+                            formularioAdicionarProduto.reset();
+                            camposProduto.forEach(limparErroProduto);
+                            sobreposicaoModal.style.display = 'none';
+                            formularioAdicionarProduto.removeAttribute('data-editar');
+                            document.querySelector('.modal-adicionar').textContent = 'Adicionar';
+                            carregarEstoque();
+                        } else {
+                            showToast(resposta.erro || 'Erro ao editar produto.', null);
+                        }
+                    })
+                    .catch(() => {
+                        showToast('Erro de comunicação com o servidor.', null);
+                    });
+            } else {
+                fetch('/produtos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dados)
+                })
+                    .then(res => res.json())
+                    .then(resposta => {
+                        if (resposta.sucesso) {
+                            formularioAdicionarProduto.reset();
+                            camposProduto.forEach(limparErroProduto);
+                            sobreposicaoModal.style.display = 'none';
+                            carregarEstoque();
+                        } else {
+                            showToast(resposta.erro || 'Erro ao cadastrar produto.', null);
+                        }
+                    })
+                    .catch(() => {
+                        showToast('Erro de comunicação com o servidor.', null);
+                    });
+            }
         }
     });
-
-    camposProduto.forEach(input => {
-        input.addEventListener('input', () => {
-            if (input.value) {
-                input.classList.add('filled');
-            } else {
-                input.classList.remove('filled');
-            }
-            if (input.value && !(input.type === 'number' && input.value === '')) {
-                limparErroProduto(input);
-            }
+}
+function fecharModalProduto() {
+    document.getElementById('formularioAdicionarProduto').removeAttribute('data-editar');
+    document.querySelector('.modal-adicionar').textContent = 'Adicionar';
+    document.getElementById('formularioAdicionarProduto').reset();
+    document.getElementById('sobreposicaoModal').style.display = 'none';
+}
+function abrirModalEditarProduto(idEstoque) {
+    fetch(`/api/estoque/produtos?estoque_id=${idEstoque}`)
+        .then(res => res.json())
+        .then(produtos => {
+            const prod = produtos[0];
+            if (!prod) return;
+            document.getElementById('sku').value = prod.sku || '';
+            document.getElementById('nome').value = prod.nome || '';
+            document.getElementById('quantidade').value = prod.quantidade || '';
+            document.getElementById('localizacao').value = prod.loja_nome || '';
+            document.getElementById('fornecedor').value = prod.fornecedor || '';
+            document.getElementById('precoCompra').value = prod.preco_compra || '';
+            document.getElementById('precoVenda').value = prod.preco_venda || '';
+            atualizarClasseFilledSelectLocalizacao();
+            document.getElementById('quantidade').setAttribute('readonly', true);
+            document.querySelector('.modal-adicionar').textContent = 'Salvar';
+            sobreposicaoModal.style.display = 'flex';
+            formularioAdicionarProduto.setAttribute('data-editar', idEstoque);
         });
-        if (input.value) input.classList.add('filled');
-        else input.classList.remove('filled');
+}
+
+// ==============================
+// 6. MENU LATERAL E NAVEGAÇÃO ENTRE SEÇÕES
+// ==============================
+for (let item of opcoesMenu) {
+    item.addEventListener('click', function () {
+        ativarMenu(this);
+        const conteudo = this.getAttribute('data-conteudo');
+        switch (conteudo) {
+            case 'dashboard':
+                mostrarSecao('secaoDashboard');
+                break;
+            case 'estoque':
+                mostrarSecao('secaoEstoque');
+                carregarEstoque();
+                break;
+            case 'movimentacao':
+                mostrarSecao('secaoMovimentacao');
+                break;
+            case 'entrada':
+                mostrarSecao('secaoEntrada');
+                carregarEntrada();
+                break;
+            case 'saida':
+                mostrarSecao('secaoSaida');
+                break;
+            case 'solicitacoes':
+                mostrarSecao('secaoSolicitacoes');
+                carregarSolicitacoes();
+                break;
+        }
+    });
+}
+if (botaoGerenciarUsuario) {
+    botaoGerenciarUsuario.addEventListener('click', function () {
+        if (botaoGerenciarUsuario.classList.contains('botao-gerenciarusuario')) {
+            mostrarSecao('secaoSolicitacoes');
+            carregarGerenciarUsuarios();
+            botaoGerenciarUsuario.textContent = 'Ver Solicitações';
+            botaoGerenciarUsuario.classList.remove('botao-gerenciarusuario');
+            botaoGerenciarUsuario.classList.add('botao-versolicitacao');
+        } else {
+            mostrarSecao('secaoSolicitacoes');
+            carregarSolicitacoes();
+            botaoGerenciarUsuario.textContent = 'Gerenciar Usuários';
+            botaoGerenciarUsuario.classList.remove('botao-versolicitacao');
+            botaoGerenciarUsuario.classList.add('botao-gerenciarusuario');
+        }
     });
 }
 
-function limparTodosErrosProduto() {
-    camposProduto.forEach(limparErroProduto);
-}
-
-if (botaoCancelarModal) {
-    botaoCancelarModal.addEventListener('click', () => {
-        if (formularioAdicionarProduto) formularioAdicionarProduto.reset();
-        limparTodosErrosProduto();
-    });
-}
-if (botaoFecharModal) {
-    botaoFecharModal.addEventListener('click', () => {
-        if (formularioAdicionarProduto) formularioAdicionarProduto.reset();
-        limparTodosErrosProduto();
-        sobreposicaoModal.style.display = 'none';
-    });
-}
-sobreposicaoModal.addEventListener('click', (e) => {
-    if (e.target === sobreposicaoModal) {
-        if (formularioAdicionarProduto) formularioAdicionarProduto.reset();
-        limparTodosErrosProduto();
-        sobreposicaoModal.style.display = 'none';
+// ==============================
+// 7. RESPONSIVIDADE E MENU
+// ==============================
+botaoMenu.addEventListener('click', function (e) {
+    e.stopPropagation();
+    if (!ehMobile()) {
+        barraLateral.classList.toggle('minimizada');
+    }
+});
+window.addEventListener('resize', atualizarEstadoBarraLateral);
+window.addEventListener('DOMContentLoaded', atualizarEstadoBarraLateral);
+botaoMenu.addEventListener('click', function () {
+    if (barraLateral.classList.contains('minimizada')) {
+        logo.style.opacity = '0';
+        logo.style.visibility = 'hidden';
+    } else {
+        logo.style.opacity = '1';
+        logo.style.visibility = 'visible';
     }
 });
 
 // ==============================
-// SOLICITAÇÕES DE USUÁRIOS PENDENTES
+// 8. SOLICITAÇÕES E GERENCIAMENTO DE USUÁRIOS
 // ==============================
 function carregarSolicitacoes() {
     fetch('/admin/usuarios/pendentes')
@@ -384,7 +417,6 @@ function carregarSolicitacoes() {
     </div>
 `;
 
-            // Eventos para aprovar usuário
             tabela.querySelectorAll('.aprovar-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const id = btn.getAttribute('data-id');
@@ -394,7 +426,6 @@ function carregarSolicitacoes() {
                 });
             });
 
-            // Evento para dispensar usuário com confirmação
             tabela.querySelectorAll('.dispensar-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const id = btn.getAttribute('data-id');
@@ -408,7 +439,6 @@ function carregarSolicitacoes() {
                 });
             });
 
-            // Evento para mudança de nível de acesso
             tabela.querySelectorAll('.nivel-acesso').forEach(sel => {
                 sel.addEventListener('change', () => {
                     const id = sel.getAttribute('data-id');
@@ -417,8 +447,6 @@ function carregarSolicitacoes() {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ nivel_acesso: sel.value })
                     });
-
-                    // Se admin, marcar todas as lojas e desabilitar
                     const group = tabela.querySelector(`.lojas-checkbox-group[data-id="${id}"]`);
                     if (group) {
                         const checkboxes = group.querySelectorAll('.loja-checkbox');
@@ -437,7 +465,6 @@ function carregarSolicitacoes() {
                 });
             });
 
-            // Evento para alteração das lojas (exceto admin)
             tabela.querySelectorAll('.lojas-checkbox-group').forEach(group => {
                 group.addEventListener('change', () => {
                     const id = group.getAttribute('data-id');
@@ -455,16 +482,11 @@ function carregarSolicitacoes() {
         });
 }
 
-// ==============================
-// GERENCIAMENTO DE TODOS OS USUÁRIOS
-// ==============================
 function carregarGerenciarUsuarios() {
     fetch('/admin/usuarios/todos')
         .then(res => res.json())
         .then(usuarios => {
-            // Filtra apenas usuários ativos
             usuarios = usuarios.filter(u => u.ativo);
-
             const tabela = document.getElementById('tabelaSolicitacoes');
             if (!usuarios.length) {
                 tabela.innerHTML = '<p style="text-align:center; color:var(--cor-principal); font-weight:600;">Nenhum usuário cadastrado.</p>';
@@ -496,13 +518,15 @@ function carregarGerenciarUsuarios() {
                 <div class="solicitacao-item ${cardClass}">
                     <span class="solicitacao-nome">${u.nome}</span>
                     <span class="solicitacao-email">${u.email}</span>
-                    <span>
-                        <select data-id="${u.id}" class="nivel-acesso" ${isAdmin ? 'disabled' : ''}>
-                            <option value="usuario" ${u.nivel_acesso === 'funcionario' ? 'selected' : ''}>Usuário</option>
-                            <option value="gerente" ${u.nivel_acesso === 'gerente' ? 'selected' : ''}>Gerente</option>
-                            <option value="admin" ${u.nivel_acesso === 'admin' ? 'selected' : ''}>Admin</option>
-                        </select>
-                    </span>
+                        <span>
+                            ${isAdmin
+                        ? `<span>Admin</span>`
+                        : `<select data-id="${u.id}" class="nivel-acesso">
+                                        <option value="funcionario" ${u.nivel_acesso === 'funcionario' ? 'selected' : ''}>Funcionário</option>
+                                        <option value="gerente" ${u.nivel_acesso === 'gerente' ? 'selected' : ''}>Gerente</option>
+                                </select>`
+                    }
+                        </span>
                     <span class="lojas-checkbox-group" data-id="${u.id}">
                         ${lojasFixas.map(loja => `
                             <label style="margin-right:10px;">
@@ -525,7 +549,30 @@ function carregarGerenciarUsuarios() {
     </div>
 `;
 
-            // Evento para dispensar usuário com confirmação
+            tabela.querySelectorAll('.solicitacao-item').forEach(item => {
+                const id = item.querySelector('.salvar-btn')?.getAttribute('data-id');
+                if (!id) return;
+                const salvarBtn = item.querySelector('.salvar-btn');
+                const checkboxes = item.querySelectorAll('.loja-checkbox');
+                const selectNivel = item.querySelector('.nivel-acesso');
+
+                // Salva o estado inicial
+                const estadoInicialCheckbox = Array.from(checkboxes).map(cb => cb.checked);
+                const nivelInicial = selectNivel ? selectNivel.value : null;
+
+                function verificarMudanca() {
+                    const mudouCheckbox = Array.from(checkboxes).some((cb, idx) => cb.checked !== estadoInicialCheckbox[idx]);
+                    const mudouNivel = selectNivel && selectNivel.value !== nivelInicial;
+                    salvarBtn.disabled = !(mudouCheckbox || mudouNivel);
+                }
+
+                // Inicialmente desabilitado
+                salvarBtn.disabled = true;
+
+                checkboxes.forEach(cb => cb.addEventListener('change', verificarMudanca));
+                if (selectNivel) selectNivel.addEventListener('change', verificarMudanca);
+            });
+            
             tabela.querySelectorAll('.dispensar-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const id = btn.getAttribute('data-id');
@@ -538,7 +585,38 @@ function carregarGerenciarUsuarios() {
                     });
                 });
             });
-            // Evento para mudança de nível de acesso
+            tabela.querySelectorAll('.salvar-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.getAttribute('data-id');
+                    const nivel = tabela.querySelector(`.nivel-acesso[data-id="${id}"]`).value;
+                    const group = tabela.querySelector(`.lojas-checkbox-group[data-id="${id}"]`);
+                    const checkboxes = group.querySelectorAll('.loja-checkbox');
+                    const lojas = Array.from(checkboxes)
+                        .filter(cb => cb.checked)
+                        .map(cb => parseInt(cb.value));
+
+                    // Atualiza nível de acesso
+                    fetch(`/admin/usuarios/${id}/nivel`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ nivel_acesso: nivel })
+                    })
+                        .then(res => res.json())
+                        .then(() => {
+                            // Atualiza lojas
+                            fetch(`/admin/usuarios/${id}/lojas`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ lojas })
+                            })
+                                .then(res => res.json())
+                                .then(() => {
+                                    showToast('Alterações salvas com sucesso!');
+                                    carregarGerenciarUsuarios(); // Atualiza a lista
+                                });
+                        });
+                });
+            });
             tabela.querySelectorAll('.nivel-acesso').forEach(sel => {
                 sel.addEventListener('change', () => {
                     const id = sel.getAttribute('data-id');
@@ -547,7 +625,6 @@ function carregarGerenciarUsuarios() {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ nivel_acesso: sel.value })
                     });
-                    // Se admin, marcar todas as lojas e desabilitar
                     const group = tabela.querySelector(`.lojas-checkbox-group[data-id="${id}"]`);
                     if (group) {
                         const checkboxes = group.querySelectorAll('.loja-checkbox');
@@ -565,7 +642,6 @@ function carregarGerenciarUsuarios() {
                     }
                 });
             });
-            // Evento para alteração das lojas (exceto admin)
             tabela.querySelectorAll('.lojas-checkbox-group').forEach(group => {
                 group.addEventListener('change', () => {
                     const id = group.getAttribute('data-id');
@@ -583,16 +659,16 @@ function carregarGerenciarUsuarios() {
         });
 }
 
-// Função para montar a tabela de estoque
+// ==============================
+// 9. ESTOQUE (Tabela, Filtros, Seletor de Loja)
+// ==============================
 function montarTabelaEstoque(produtos) {
     const tabela = document.getElementById('estoqueTabela');
     if (!tabela) return;
-
     if (!produtos.length) {
         tabela.innerHTML = '<p style="text-align:center; color:var(--cor-principal); font-weight:600;">Nenhum produto cadastrado nesta loja.</p>';
         return;
     }
-
     let html = `
         <div class="estoque-tabela">
             <div class="estoque-tabela-header">
@@ -604,49 +680,68 @@ function montarTabelaEstoque(produtos) {
                 <div>Preço Compra</div>
                 <div>Preço Venda</div>
                 <div>Data Registro</div>
+                <div>Loja</div>
+                <div>Ações</div>
             </div>
             ${produtos.map(prod => `
-                <div class="estoque-tabela-row">
-                    <div><span class="estoque-label">ID:</span> ${prod.id_produto}</div>
-                    <div><span class="estoque-label">SKU:</span> ${prod.sku}</div>
-                    <div><span class="estoque-label">Nome:</span> ${prod.nome}</div>
-                    <div><span class="estoque-label">Qtd:</span> ${prod.quantidade}</div>
-                    <div><span class="estoque-label">Fornecedor:</span> ${prod.fornecedor}</div>
-                    <div><span class="estoque-label">Compra:</span> R$ ${Number(prod.preco_compra).toFixed(2)}</div>
-                    <div><span class="estoque-label">Venda:</span> R$ ${Number(prod.preco_venda).toFixed(2)}</div>
-                    <div><span class="estoque-label">Registro:</span> ${new Date(prod.data_registro).toLocaleDateString()}</div>
+                <div class="estoque-tabela-row estoque-loja-${prod.id_loja}" data-id="${prod.id_produto}" data-estoque-id="${prod.id_estoque_loja}">
+                    <div>${prod.id_produto}</div>
+                    <div>${prod.sku}</div>
+                    <div>${prod.nome}</div>
+                    <div>${prod.quantidade}</div>
+                    <div>${prod.fornecedor}</div>
+                    <div>R$ ${Number(prod.preco_compra).toFixed(2)}</div>
+                    <div>R$ ${Number(prod.preco_venda).toFixed(2)}</div>
+                    <div>${new Date(prod.data_registro).toLocaleDateString()}</div>
+                    <div>${prod.loja_nome}</div>
+                    <div>
+                        <button class="btn-editar-produto" title="Editar"><i class="fas fa-edit"></i></button>
+                        <button class="btn-deletar-produto" title="Excluir"><i class="fas fa-trash"></i></button>
+                    </div>
                 </div>
             `).join('')}
         </div>
     `;
     tabela.innerHTML = html;
+    tabela.querySelectorAll('.btn-deletar-produto').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const row = btn.closest('.estoque-tabela-row');
+            const idEstoque = row.getAttribute('data-estoque-id');
+            showToastConfirm('Deseja realmente excluir este produto?', confirmado => {
+                if (confirmado) {
+                    fetch(`/api/estoque/produtos/${idEstoque}`, { method: 'DELETE' })
+                        .then(res => res.json())
+                        .then(() => carregarEstoque());
+                }
+            });
+        });
+    });
+    tabela.querySelectorAll('.btn-editar-produto').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const row = btn.closest('.estoque-tabela-row');
+            const idEstoque = row.getAttribute('data-estoque-id');
+            abrirModalEditarProduto(idEstoque);
+        });
+    });
 }
-
-// Função para montar o seletor de loja
 function montarSeletorLoja(lojasUsuario, lojaSelecionadaId, onChange) {
     const selector = document.getElementById('estoque-loja-selector');
     if (!selector) return;
-
-    // IDs das lojas que o usuário pode acessar
     const idsPermitidos = lojasUsuario.map(loja => loja.id);
-
-    // Lojas fixas do sistema
     const lojasFixas = [
         { id: 1, nome: 'Loja Principal', icone: 'fa-store' },
         { id: 2, nome: 'Loja 1', icone: 'fa-shop' },
         { id: 3, nome: 'Loja 2', icone: 'fa-shop' }
     ];
-
-    // Monta os 3 botões
     let botoes = lojasFixas.map(loja => {
         const permitido = idsPermitidos.includes(loja.id);
         let classe = 'loja-btn';
         if (!permitido) {
             classe += ' loja-btn-inativo';
         } else if (lojaSelecionadaId === loja.id) {
-            classe += ' loja-btn-filtrada'; // roxo escuro (filtrada)
+            classe += ' loja-btn-filtrada';
         } else {
-            classe += ' loja-btn-ativo'; // roxo claro (permitida)
+            classe += ' loja-btn-ativo';
         }
         return `
             <button 
@@ -660,31 +755,26 @@ function montarSeletorLoja(lojasUsuario, lojaSelecionadaId, onChange) {
             </button>
         `;
     }).join('');
-
     selector.innerHTML = botoes;
-
-    // Clique: filtra ou desfaz filtro
     selector.querySelectorAll('.loja-btn-ativo, .loja-btn-filtrada').forEach(btn => {
         btn.addEventListener('click', () => {
             const id = Number(btn.getAttribute('data-id'));
             if (lojaSelecionadaId === id) {
-                onChange(null); // desfaz filtro (mostra todas permitidas)
+                onChange(null);
             } else {
-                onChange(id); // filtra por loja
+                onChange(id);
             }
         });
     });
 }
-
 let lojasPermitidasGlobal = [];
 let lojaSelecionadaIdGlobal = null;
-
 function carregarEstoque() {
     fetch('/api/estoque/lojas')
         .then(res => res.json())
         .then(lojasUsuario => {
             lojasPermitidasGlobal = lojasUsuario.map(l => l.id);
-            lojaSelecionadaIdGlobal = null; // começa sem filtro
+            lojaSelecionadaIdGlobal = null;
             montarSeletorLoja(lojasUsuario, lojaSelecionadaIdGlobal, (novaLojaId) => {
                 lojaSelecionadaIdGlobal = novaLojaId;
                 montarSeletorLoja(lojasUsuario, lojaSelecionadaIdGlobal, arguments.callee);
@@ -693,19 +783,15 @@ function carregarEstoque() {
             carregarProdutosDaLoja(lojaSelecionadaIdGlobal);
         });
 }
-
 function carregarProdutosDaLoja(lojaId) {
     if (!lojaId) {
-        // Mostra todas as lojas permitidas
         Promise.all(lojasPermitidasGlobal.map(id =>
             fetch(`/api/estoque/produtos?loja=${id}`).then(res => res.json())
         )).then(arrays => {
-            // Junta todos os produtos das lojas permitidas
             const produtos = [].concat(...arrays);
             montarTabelaEstoque(produtos);
         });
     } else {
-        // Mostra só a loja filtrada
         fetch(`/api/estoque/produtos?loja=${lojaId}`)
             .then(res => res.json())
             .then(produtos => {
@@ -713,3 +799,236 @@ function carregarProdutosDaLoja(lojaId) {
             });
     }
 }
+
+// ==============================
+// 10. ENTRADA DE PRODUTOS E TRANSFERÊNCIAS
+// ==============================
+function carregarEntrada() {
+    document.getElementById('estoquePorLojaEntrada').innerHTML =
+        '<p style="color:var(--cor-principal);margin:8px 0;">Selecione uma loja e produto para verificar o estoque por loja.</p>';
+    fetch('/api/estoque/lojas')
+        .then(res => res.json())
+        .then(lojas => {
+            const selectLoja = document.querySelector('#entrada-loja-origem');
+            selectLoja.innerHTML = '<option value="" disabled selected hidden>Selecione</option>' +
+                lojas.map(l => `<option value="${l.id}">${l.nome}</option>`).join('');
+            selectLoja.onchange = function () {
+                carregarProdutosEntrada(this.value);
+            };
+            const selectProd = document.querySelector('#entrada-produto');
+            selectProd.innerHTML = '<option value="" disabled selected hidden>Selecione</option>';
+        });
+}
+function carregarProdutosEntrada(lojaId) {
+    document.getElementById('estoquePorLojaEntrada').innerHTML =
+        '<p style="color:var(--cor-principal);margin:8px 0;">Selecione um produto para verificar o estoque por loja.</p>';
+    fetch(`/api/estoque/produtos?loja=${lojaId}`)
+        .then(res => res.json())
+        .then(produtos => {
+            const selectProd = document.querySelector('#entrada-produto');
+            selectProd.innerHTML = '<option value="" disabled selected hidden>Selecione</option>' +
+                produtos.map(p => `<option value="${p.id_estoque_loja}" data-id-produto="${p.id_produto}">${p.nome} (SKU: ${p.sku})</option>`).join('');
+            selectProd.onchange = function () {
+                const selectedOption = selectProd.options[selectProd.selectedIndex];
+                const id_produto = selectedOption ? selectedOption.getAttribute('data-id-produto') : null;
+                if (id_produto) {
+                    mostrarEstoquePorLoja(id_produto);
+                } else {
+                    document.getElementById('estoquePorLojaEntrada').innerHTML =
+                        '<p style="color:var(--cor-principal);margin:8px 0;">Selecione um produto para verificar o estoque por loja.</p>';
+                }
+            };
+        });
+}
+function mostrarEstoquePorLoja(id_produto) {
+    fetch(`/api/estoque/produto/${id_produto}/por-loja`)
+        .then(res => res.json())
+        .then(dados => {
+            const div = document.getElementById('estoquePorLojaEntrada');
+            if (!dados.length) {
+                div.innerHTML = '<p style="color:var(--cor-principal);margin:8px 0;">Produto não cadastrado em nenhuma loja.</p>';
+                return;
+            }
+            div.innerHTML = `
+                <div class="estoque-por-loja-lista">
+                    <strong>Estoque por loja:</strong>
+                    <ul>
+                        ${dados.map(l => `<li>${l.loja_nome}: <b>${l.quantidade}</b></li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        });
+}
+
+// ==============================
+// 10.1. FORMULÁRIO DE ENTRADA/TRANSFERÊNCIA
+// ==============================
+const btnRegistrarEntrada = document.querySelector('#btn-registrar-entrada');
+const btnTransferirEntrada = document.querySelector('#btn-transferir-entrada');
+const entradaFormContainer = document.querySelector('#entradaFormContainer');
+
+// Renderiza o formulário conforme o tipo
+function renderizarFormEntrada(tipo) {
+    if (!entradaFormContainer) return;
+    if (tipo === 'entrada') {
+        entradaFormContainer.innerHTML = `
+            <form class="entrada-container" id="formEntrada" autocomplete="off">
+                <div class="modal-campo">
+                    <input type="number" id="entradaQuantidade" name="quantidade" min="1" placeholder=" " required>
+                    <label for="entradaQuantidade">Quantidade</label>
+                </div>
+                <div class="entrada-form-acoes">
+                    <button type="submit" class="btn-entrada" id="confirmarEntrada">Confirmar</button>
+                    <button type="button" class="btn-entrada" id="cancelarEntrada">Cancelar</button>
+                </div>
+            </form>
+        `;
+    } else if (tipo === 'transferencia') {
+        entradaFormContainer.innerHTML = `
+            <form class="entrada-container" id="formEntrada" autocomplete="off">
+                <div class="modal-campo">
+                    <input type="number" id="entradaQuantidade" name="quantidade" min="1" placeholder=" " required>
+                    <label for="entradaQuantidade">Quantidade</label>
+                </div>
+                <div class="modal-campo">
+                    <select id="entradaLojaDestino" name="lojaDestino" required>
+                        <option value="" disabled selected hidden></option>
+                        <option value="1">Loja Principal</option>
+                        <option value="2">Loja 1</option>
+                        <option value="3">Loja 2</option>
+                    </select>
+                    <label for="entradaLojaDestino">Loja de Destino</label>
+                </div>
+                <div class="entrada-form-acoes">
+                    <button type="submit" class="btn-entrada" id="confirmarEntrada">Confirmar</button>
+                    <button type="button" class="btn-entrada" id="cancelarEntrada">Cancelar</button>
+                </div>
+            </form>
+        `;
+    } else {
+        entradaFormContainer.innerHTML = '';
+    }
+    adicionarListenersFormEntrada(tipo);
+    atualizarLabelFlutuanteEntrada();
+}
+
+// Adiciona listeners ao formulário renderizado
+function adicionarListenersFormEntrada(tipo) {
+    const formEntrada = document.querySelector('#formEntrada');
+    const cancelarEntrada = document.querySelector('#cancelarEntrada');
+    if (cancelarEntrada) {
+        cancelarEntrada.addEventListener('click', () => {
+            entradaFormContainer.innerHTML = '';
+        });
+    }
+    if (formEntrada) {
+        formEntrada.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            // NOVA VALIDAÇÃO: Loja de origem e produto obrigatórios
+            const selectLojaOrigem = document.querySelector('#entrada-loja-origem');
+            const selectProd = document.querySelector('#entrada-produto');
+            const idLojaOrigem = selectLojaOrigem && selectLojaOrigem.value ? selectLojaOrigem.value : null;
+            const idEstoque = selectProd && selectProd.value ? selectProd.value : null;
+
+            if (!idLojaOrigem) {
+                showToast('Selecione a loja de origem!');
+                return;
+            }
+            if (!idEstoque) {
+                showToast('Selecione um produto!');
+                return;
+            }
+
+            const quantidade = Number(formEntrada.quantidade.value);
+
+            if (tipo === 'entrada') {
+                fetch('/api/estoque/entrada', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ idEstoque, quantidade })
+                })
+                    .then(res => res.json())
+                    .then(resposta => {
+                        if (resposta.sucesso) {
+                            showToast('Entrada registrada!');
+                            entradaFormContainer.innerHTML = '';
+                            carregarProdutosEntrada(idLojaOrigem);
+                        } else {
+                            showToast(resposta.erro || 'Erro ao registrar entrada.');
+                        }
+                    });
+            } else if (tipo === 'transferencia') {
+                const lojaDestino = formEntrada.lojaDestino.value;
+                if (!lojaDestino) {
+                    showToast('Selecione a loja de destino!');
+                    return;
+                }
+                fetch('/api/estoque/transferencia', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ idEstoque, quantidade, lojaDestino })
+                })
+                    .then(res => res.json())
+                    .then(resposta => {
+                        if (resposta.sucesso) {
+                            showToast('Transferência realizada!');
+                            entradaFormContainer.innerHTML = '';
+                            carregarProdutosEntrada(idLojaOrigem);
+                        } else {
+                            showToast(resposta.erro || 'Erro ao transferir.');
+                        }
+                    });
+            }
+        });
+    }
+}
+
+// Função para ativar o efeito flutuante do label nos campos do formulário de entrada
+function atualizarLabelFlutuanteEntrada() {
+    // Para input number
+    const inputQtd = document.querySelector('#entradaQuantidade');
+    if (inputQtd) {
+        inputQtd.addEventListener('blur', function () {
+            if (this.value) {
+                this.classList.add('filled');
+            } else {
+                this.classList.remove('filled');
+            }
+        });
+    }
+    // Para select loja destino (se existir)
+    const selectLoja = document.querySelector('#entradaLojaDestino');
+    if (selectLoja) {
+        selectLoja.addEventListener('change', function () {
+            if (this.value) {
+                this.classList.add('filled');
+            } else {
+                this.classList.remove('filled');
+            }
+        });
+    }
+}
+
+// Eventos dos botões principais
+if (btnRegistrarEntrada) {
+    btnRegistrarEntrada.addEventListener('click', () => {
+        renderizarFormEntrada('entrada');
+    });
+}
+if (btnTransferirEntrada) {
+    btnTransferirEntrada.addEventListener('click', () => {
+        renderizarFormEntrada('transferencia');
+    });
+}
+
+// ==============================
+// 11. LOGOUT COM CONFIRMAÇÃO
+// ==============================
+botaoLogout.addEventListener('click', function () {
+    showToastConfirm('Tem certeza que deseja sair?', function (confirmado) {
+        if (confirmado) {
+            window.location.href = '/login';
+        }
+    });
+});
