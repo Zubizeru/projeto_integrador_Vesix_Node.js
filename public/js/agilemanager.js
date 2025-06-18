@@ -651,9 +651,28 @@ function carregarGerenciarUsuarios() {
 // ==============================
 // 9. ESTOQUE (Tabela, Filtros, Seletor de Loja)
 // ==============================
-function montarTabelaEstoque(produtos) {
+function montarTabelaEstoque(produtos, filtro = '') {
     const tabela = document.getElementById('estoqueTabela');
     if (!tabela) return;
+    let lista = produtos;
+    if (filtro) {
+        const f = filtro.toLowerCase();
+        lista = produtos.filter(prod =>
+            (prod.id_produto && String(prod.id_produto).toLowerCase().includes(f)) ||
+            (prod.sku && prod.sku.toLowerCase().includes(f)) ||
+            (prod.nome && prod.nome.toLowerCase().includes(f)) ||
+            (prod.quantidade !== undefined && String(prod.quantidade).toLowerCase().includes(f)) ||
+            (prod.fornecedor && prod.fornecedor.toLowerCase().includes(f)) ||
+            (prod.preco_compra !== undefined && String(prod.preco_compra).toLowerCase().includes(f)) ||
+            (prod.preco_venda !== undefined && String(prod.preco_venda).toLowerCase().includes(f)) ||
+            (prod.data_registro && new Date(prod.data_registro).toLocaleDateString('pt-BR').toLowerCase().includes(f)) ||
+            (prod.loja_nome && prod.loja_nome.toLowerCase().includes(f))
+        );
+    }
+    if (!lista.length) {
+        tabela.innerHTML = '<p style="text-align:center; color:var(--cor-principal); font-weight:600;">Nenhum produto encontrado.</p>';
+        return;
+    }
     if (!produtos.length) {
         tabela.innerHTML = '<p style="text-align:center; color:var(--cor-principal); font-weight:600;">Nenhum produto cadastrado nesta loja.</p>';
         return;
@@ -672,7 +691,7 @@ function montarTabelaEstoque(produtos) {
                 <div>Loja</div>
                 <div>Ações</div>
             </div>
-                ${produtos.map(prod => `
+                ${lista.map(prod => `
                     <div class="estoque-tabela-row estoque-loja-${prod.id_loja}" data-id="${prod.id_produto}" data-estoque-id="${prod.id_estoque_loja}">
                         <div><span class="estoque-label">ID: </span>${prod.id_produto}</div>
                         <div><span class="estoque-label">SKU: </span>${prod.sku}</div>
@@ -787,22 +806,35 @@ function carregarEstoque() {
             carregarProdutosDaLoja(lojaSelecionadaIdGlobal);
         });
 }
+
+let produtosEstoqueCache = [];
 function carregarProdutosDaLoja(lojaId) {
     if (!lojaId) {
         Promise.all(lojasPermitidasGlobal.map(id =>
             fetch(`/api/estoque/produtos?loja=${id}`).then(res => res.json())
         )).then(arrays => {
             const produtos = [].concat(...arrays);
+            produtosEstoqueCache = produtos;
             montarTabelaEstoque(produtos);
         });
     } else {
         fetch(`/api/estoque/produtos?loja=${lojaId}`)
             .then(res => res.json())
             .then(produtos => {
+                produtosEstoqueCache = produtos;
                 montarTabelaEstoque(produtos);
             });
     }
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+    const inputPesquisa = document.getElementById('estoque-pesquisa');
+    if (inputPesquisa) {
+        inputPesquisa.addEventListener('input', function () {
+            montarTabelaEstoque(produtosEstoqueCache, this.value);
+        });
+    }
+});
 
 // ==============================
 // 10. ENTRADA DE PRODUTOS E TRANSFERÊNCIAS
