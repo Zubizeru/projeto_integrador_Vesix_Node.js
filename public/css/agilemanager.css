@@ -1102,10 +1102,12 @@ body.escuro .entrada-filtros select {
     padding: 0;
     margin: 0;
 }
+
 .estoque-por-loja-lista li {
     margin-bottom: 4px;
     color: var(--texto-conteudo);
 }
+
 body.escuro .estoque-por-loja-lista {
     background: var(--cor-secundaria);
     color: var(--texto-conteudo-escuro);
@@ -1127,7 +1129,7 @@ body.escuro #estoquePorLojaEntrada {
     color: var(--texto-conteudo-escuro);
 }
 
-#estoquePorLojaSaida{
+#estoquePorLojaSaida {
     background: #f7f7fa;
     border-radius: var(--raio-campo);
     padding: 18px;
@@ -1206,7 +1208,8 @@ body.escuro .entrada-form-container {
 .saida-filtros label {
     flex: 1 1 200px;
     font-weight: 500;
-    color: var(--cor-principal); /* vermelho para diferenciar, troque se quiser */
+    color: var(--cor-principal);
+    /* vermelho para diferenciar, troque se quiser */
 }
 
 .saida-filtros select {
@@ -1269,15 +1272,18 @@ body.escuro .saida-form-container {
     .saida-container {
         padding: 10px;
     }
+
     .saida-filtros {
         flex-direction: column;
         gap: 10px;
     }
+
     .saida-acoes {
         flex-direction: column;
         align-items: stretch;
         gap: 8px;
     }
+
     .saida-filtros label {
         flex: none;
         font-weight: 500;
@@ -1368,6 +1374,69 @@ body.escuro .saida-form-container {
     flex: 1;
 }
 
+/* ======================= */
+/* Movimentação            */
+/* ======================= */
+.historico-cards {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.historico-card {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px var(--sombra-leve);
+    padding: 10px 30px; 
+    width: 80%;
+    border-left: 8px solid var(--cor-principal); 
+    font-size: 1.12rem; 
+    margin-bottom: 10px;
+}
+
+body.escuro .historico-card {
+    background: var(--cor-secundaria);
+    color: var(--texto-conteudo-escuro);
+}
+
+.historico-card .historico-cabecalho {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 0.98rem;
+}
+
+.historico-card .historico-tipo {
+    font-weight: bold;
+    color: var(--cor-principal);
+}
+
+.historico-card.historico-adicao {
+    border-left-color: #4caf50;
+}
+
+.historico-card.historico-edicao {
+    border-left-color: #2196f3;
+}
+
+.historico-card.historico-exclusao {
+    border-left-color: #f44336;
+}
+
+.historico-card.historico-entrada {
+    border-left-color: #6c63ff;
+}
+
+.historico-card.historico-saida {
+    border-left-color: #ff9800;
+}
+
+.historico-card.historico-transferencia {
+    border-left-color: #9c27b0;
+}
+
+
 /* Responsividade */
 @media (max-width: 700px) {
     .entrada-container {
@@ -1413,7 +1482,8 @@ body.escuro .saida-form-container {
         width: 100%;
     }
 
-    .botao-gerenciarusuario, .botao-versolicitacao {
+    .botao-gerenciarusuario,
+    .botao-versolicitacao {
         width: 100%;
     }
 }
