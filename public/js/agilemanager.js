@@ -304,6 +304,7 @@ for (let item of opcoesMenu) {
                 break;
             case 'movimentacao':
                 mostrarSecao('secaoMovimentacao');
+                carregarHistoricoMovimentacao();
                 break;
             case 'entrada':
                 mostrarSecao('secaoEntrada');
@@ -1294,9 +1295,46 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
+// ==============================
+// 12. MOVIMENTAÇÃO DE ESTOQUE
+// ==============================
+function carregarHistoricoMovimentacao() {
+    fetch('/api/estoque/historico')
+        .then(res => res.json())
+        .then(historico => {
+            const secao = document.getElementById('secaoMovimentacao');
+            if (!secao) return;
+            if (!historico.length) {
+                secao.innerHTML = '<h1 class="titulosecao">Movimentação</h1><p class="subtitulo-secao">Nenhuma movimentação registrada.</p>';
+                return;
+            }
+            secao.innerHTML = `
+                <h1 class="titulosecao">Movimentação</h1>
+                <p class="subtitulo-secao">Histórico das últimas ações no estoque.</p>
+                <div class="historico-cards">
+                    ${historico.map(item => `
+                        <div class="historico-card historico-${item.tipo_acao}">
+                            <div class="historico-cabecalho">
+                                <span class="historico-tipo">${item.tipo_acao.toUpperCase()}</span>
+                                <span class="historico-data">${new Date(item.data_acao).toLocaleString('pt-BR')}</span>
+                            </div>
+                            <div class="historico-info">
+                                <b>Produto:</b> ${item.produto_nome || '-'} (SKU: ${item.sku || '-'})<br>
+                                <b>Usuário:</b> ${item.usuario_nome || '-'}
+                                ${item.quantidade ? `<br><b>Quantidade:</b> ${item.quantidade}` : ''}
+                                ${item.loja_origem_nome ? `<br><b>Loja Origem:</b> ${item.loja_origem_nome}` : ''}
+                                ${item.loja_destino_nome ? `<br><b>Loja Destino:</b> ${item.loja_destino_nome}` : ''}
+                                ${item.detalhes ? `<br><b>Detalhes:</b> ${item.detalhes}` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        });
+}
 
 // ==============================
-// 11. LOGOUT COM CONFIRMAÇÃO
+// 13. LOGOUT COM CONFIRMAÇÃO
 // ==============================
 botaoLogout.addEventListener('click', function () {
     showToastConfirm('Tem certeza que deseja sair?', function (confirmado) {
