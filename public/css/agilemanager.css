@@ -1090,24 +1090,22 @@ body.escuro .entrada-filtros select {
 
 .estoque-por-loja-lista {
     background: #f7f7fa;
-    border-radius: 8px;
-    padding: 10px 16px;
-    margin-top: 8px;
+    border-radius: var(--raio-campo, 8px);
+    padding: 18px;
+    margin: 18px auto 0 auto;
+    max-width: 700px;
     font-size: 1rem;
-    display: flex;
-    justify-content: center;
-    flex-direction: column;
 }
 
 .estoque-por-loja-lista ul {
-    margin: 0;
     list-style: none;
+    padding: 0;
+    margin: 0;
 }
-
 .estoque-por-loja-lista li {
     margin-bottom: 4px;
+    color: var(--texto-conteudo);
 }
-
 body.escuro .estoque-por-loja-lista {
     background: var(--cor-secundaria);
     color: var(--texto-conteudo-escuro);
@@ -1125,6 +1123,22 @@ body.escuro .estoque-por-loja-lista {
 }
 
 body.escuro #estoquePorLojaEntrada {
+    background: var(--cor-secundaria);
+    color: var(--texto-conteudo-escuro);
+}
+
+#estoquePorLojaSaida{
+    background: #f7f7fa;
+    border-radius: var(--raio-campo);
+    padding: 18px;
+    margin: 0 auto 18px auto;
+    max-width: 700px;
+    min-height: 60px;
+    box-shadow: 0 2px 8px var(--sombra-leve);
+    font-size: 1rem;
+}
+
+body.escuro #estoquePorLojaSaida {
     background: var(--cor-secundaria);
     color: var(--texto-conteudo-escuro);
 }

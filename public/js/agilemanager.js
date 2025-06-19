@@ -1081,6 +1081,9 @@ if (btnTransferirEntrada) {
 // 11. CARREGAR SAIDAS
 // ==============================
 function carregarSaida() {
+    // Mensagem inicial igual à entrada
+    document.getElementById('estoquePorLojaSaida').innerHTML =
+        '<p style="color:var(--cor-principal);margin:8px 0;">Selecione uma loja e produto para verificar o estoque por loja.</p>';
     // Limpa o formulário
     document.getElementById('saidaFormContainer').innerHTML = '';
     // Carrega lojas
@@ -1107,12 +1110,40 @@ function carregarProdutosSaida(lojaId) {
             const selectProd = document.getElementById('saida-produto');
             selectProd.innerHTML = '<option value="" disabled selected hidden>Selecione</option>' +
                 produtos.map(p => `<option value="${p.id_estoque_loja}" data-id-produto="${p.id_produto}">${p.nome} (SKU: ${p.sku})</option>`).join('');
-            // Adiciona o evento para sumir o formulário ao trocar produto
             selectProd.onchange = function () {
-                if (!selectProd.value) {
-                    document.getElementById('saidaFormContainer').innerHTML = '';
+                const selectedOption = selectProd.options[selectProd.selectedIndex];
+                const id_produto = selectedOption ? selectedOption.getAttribute('data-id-produto') : null;
+                if (id_produto) {
+                    mostrarEstoquePorLojaSaida(id_produto);
+                } else {
+                    document.getElementById('estoquePorLojaSaida').innerHTML =
+                        '<p style="color:var(--cor-principal);margin:8px 0;">Selecione um produto para verificar o estoque por loja.</p>';
                 }
+                // Some o formulário se trocar produto
+                document.getElementById('saidaFormContainer').innerHTML = '';
             };
+            // Limpa a lista ao trocar de loja
+            document.getElementById('estoquePorLojaSaida').innerHTML =
+                '<p style="color:var(--cor-principal);margin:8px 0;">Selecione um produto para verificar o estoque por loja.</p>';
+        });
+}
+
+function mostrarEstoquePorLojaSaida(id_produto) {
+    fetch(`/api/estoque/produto/${id_produto}/por-loja`)
+        .then(res => res.json())
+        .then(dados => {
+            const div = document.getElementById('estoquePorLojaSaida');
+            if (!dados.length) {
+                div.innerHTML = '<p style="color:var(--cor-principal);margin:8px 0;">Produto não cadastrado em nenhuma loja.</p>';
+                return;
+            }
+            div.innerHTML = `
+                <div class="estoque-por-loja-lista">
+                    <ul>
+                        ${dados.map(l => `<li>${l.loja_nome}: <b>${l.quantidade}</b></li>`).join('')}
+                    </ul>
+                </div>
+            `;
         });
 }
 
