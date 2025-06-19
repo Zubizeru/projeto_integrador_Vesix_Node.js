@@ -1226,6 +1226,74 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
+// ==============================
+// DASHBOARD - GRÁFICOS
+// ==============================
+function carregarGraficosDashboard() {
+    // Movimentação mensal
+    fetch('/api/dashboard/movimentacao-mensal')
+        .then(res => res.json())
+        .then(dados => {
+            const ctx = document.getElementById('graficoMovimentacao').getContext('2d');
+            const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+            const labels = dados.map(d => meses[d.mes-1]);
+            const entradas = dados.map(d => d.entradas);
+            const saidas = dados.map(d => d.saidas);
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        { label: 'Entradas', data: entradas, backgroundColor: 'rgba(54, 162, 235, 0.7)' },
+                        { label: 'Saídas', data: saidas, backgroundColor: 'rgba(255, 99, 132, 0.7)' }
+                    ]
+                }
+            });
+        });
+
+    // Produtos por loja
+    fetch('/api/dashboard/produtos-por-loja')
+        .then(res => res.json())
+        .then(dados => {
+            const ctx = document.getElementById('graficoPizzaLoja').getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: dados.map(l => l.loja),
+                    datasets: [{
+                        data: dados.map(l => l.total),
+                        backgroundColor: ['#36A2EB', '#FF6384', '#FFCE56', '#4BC0C0', '#9966FF']
+                    }]
+                }
+            });
+        });
+
+    // Margem de lucro
+    fetch('/api/dashboard/lucro')
+        .then(res => res.json())
+        .then(lucro => {
+            const ctx = document.getElementById('graficoLucro').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Total Comprado', 'Total Vendido'],
+                    datasets: [{
+                        data: [lucro.total_compra, lucro.total_venda],
+                        backgroundColor: ['#FFCE56', '#4BC0C0']
+                    }]
+                }
+            });
+            document.getElementById('lucroValor').innerHTML = `<b>Margem de Lucro:</b> R$ ${(lucro.total_venda - lucro.total_compra).toFixed(2)}`;
+        });
+}
+
+// Chame ao abrir o dashboard
+document.addEventListener('DOMContentLoaded', function () {
+    if (document.getElementById('graficoMovimentacao')) {
+        carregarGraficosDashboard();
+    }
+});
+
 
 // ==============================
 // 11. LOGOUT COM CONFIRMAÇÃO

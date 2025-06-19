@@ -826,6 +826,28 @@ body.escuro .solicitacao-item .lojas-checkbox-group label {
 }
 
 /* ======================= */
+/* DASHBOARD               */
+/* ======================= */
+.dashboard-graficos {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin: 2rem 0;
+}
+.dashboard-graficos > div {
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    min-width: 350px;
+}
+canvas {
+    max-width: 400px;
+    max-height: 300px;
+}
+
+
+/* ======================= */
 /* ESTOQUE                 */
 /* ======================= */
 .estoque-tabela {

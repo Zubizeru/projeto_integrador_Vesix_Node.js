@@ -224,6 +224,53 @@ app.get('/admin/usuarios/todos', (req, res) => {
 });
 
 // ==============================
+// ROTAS DE DASHBOARD
+// ==============================
+
+// Entradas e saídas por mês
+app.get('/api/dashboard/movimentacao-mensal', (req, res) => {
+    db.query(`
+        SELECT 
+            MONTH(el.data_registro) as mes,
+            SUM(COALESCE(ee.quantidade,0)) as entradas,
+            SUM(COALESCE(es.quantidade,0)) as saidas
+        FROM estoque_loja el
+        LEFT JOIN Entrada_Estoque ee ON ee.id_produto = el.id_produto AND MONTH(ee.data_entrada) = MONTH(el.data_registro)
+        LEFT JOIN Saida_Estoque es ON es.id_produto = el.id_produto AND MONTH(es.data_saida) = MONTH(el.data_registro)
+        GROUP BY mes
+        ORDER BY mes
+    `, (err, rows) => {
+        if (err) return res.status(500).json([]);
+        res.json(rows);
+    });
+});
+
+// Produtos por loja
+app.get('/api/dashboard/produtos-por-loja', (req, res) => {
+    db.query(`
+        SELECT l.nome as loja, SUM(el.quantidade) as total
+        FROM estoque_loja el
+        JOIN loja l ON l.id = el.id_loja
+        GROUP BY l.nome
+    `, (err, rows) => {
+        if (err) return res.status(500).json([]);
+        res.json(rows);
+    });
+});
+
+// Margem de lucro
+app.get('/api/dashboard/lucro', (req, res) => {
+    db.query(`
+        SELECT 
+            (SELECT SUM(ee.quantidade * p.preco_compra) FROM Entrada_Estoque ee JOIN Produto p ON p.id_produto = ee.id_produto) as total_compra,
+            (SELECT SUM(se.quantidade * el.preco_venda) FROM Saida_Estoque se JOIN estoque_loja el ON el.id_produto = se.id_produto) as total_venda
+    `, (err, rows) => {
+        if (err) return res.status(500).json({ total_compra: 0, total_venda: 0 });
+        res.json(rows[0]);
+    });
+});
+
+// ==============================
 // ROTAS DE ENVIO DE PRODUTOS
 // ==============================
 
