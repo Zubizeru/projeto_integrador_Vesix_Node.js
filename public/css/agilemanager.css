@@ -398,7 +398,7 @@ body.escuro .modal-campo input:not(:placeholder-shown)+label,
 body.escuro .modal-campo input.filled+label,
 body.escuro .modal-campo input.erro+label {
     background: var(--cor-secundaria);
-    color: #b94fb2;
+    color: var(--texto-conteudo-escuro);
 }
 
 .modal-campo select.filled+label,
@@ -416,7 +416,7 @@ body.escuro .modal-campo select.filled+label,
 body.escuro .modal-campo select:focus+label,
 body.escuro .modal-campo select.erro+label {
     background: var(--cor-secundaria);
-    color: #b94fb2;
+    color: var(--texto-conteudo-escuro);
 }
 
 body.escuro .modal-campo input,
@@ -834,18 +834,43 @@ body.escuro .solicitacao-item .lojas-checkbox-group label {
     flex-wrap: wrap;
     margin: 2rem 0;
 }
-.dashboard-graficos > div {
+
+.dashboard-graficos>div {
     background: #fff;
     padding: 1.5rem;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     min-width: 350px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1 1 30%;
 }
+
+#lucroValor {
+    margin-top: 5px;
+}
+
 canvas {
     max-width: 400px;
     max-height: 300px;
 }
 
+body.escuro .dashboard-graficos>div {
+    background: var(--cor-secundaria);
+    color: var(--texto-conteudo-escuro);
+    box-shadow: 0 2px 8px rgba(30, 30, 63, 0.18);
+}
+
+body.escuro .dashboard-graficos {
+    background: var(--fundo-conteudo-escuro);
+}
+
+body.escuro canvas {
+    background: var(--cor-secundaria);
+    color: var(--texto-conteudo-escuro);
+    border-radius: 8px;
+}
 
 /* ======================= */
 /* ESTOQUE                 */
@@ -1051,10 +1076,14 @@ body.escuro .estoque-tabela.modo-card .estoque-tabela-row.estoque-loja-3 {
     border-radius: var(--raio-campo);
     padding: 18px;
     margin-bottom: 18px;
-    box-shadow: 0 2px 8px var(--sombra-leve);
     max-width: 700px;
     margin-left: auto;
     margin-right: auto;
+}
+
+body.escuro .entrada-container {
+    background: var(--cor-secundaria);
+    color: var(--texto-conteudo-escuro);
 }
 
 .entrada-filtros {
@@ -1127,7 +1156,6 @@ body.escuro .entrada-filtros select {
 
 .estoque-por-loja-lista li {
     margin-bottom: 4px;
-    color: var(--texto-conteudo);
 }
 
 body.escuro .estoque-por-loja-lista {
@@ -1147,8 +1175,8 @@ body.escuro .estoque-por-loja-lista {
 }
 
 body.escuro #estoquePorLojaEntrada {
-    background: var(--cor-secundaria);
     color: var(--texto-conteudo-escuro);
+    background: var(--cor-secundaria);
 }
 
 #estoquePorLojaSaida {
@@ -1163,8 +1191,12 @@ body.escuro #estoquePorLojaEntrada {
 }
 
 body.escuro #estoquePorLojaSaida {
-    background: var(--cor-secundaria);
     color: var(--texto-conteudo-escuro);
+    background: var(--cor-secundaria);
+}
+
+.entrada-form-container:empty {
+    display: none !important;
 }
 
 .entrada-form-container {
@@ -1176,8 +1208,8 @@ body.escuro #estoquePorLojaSaida {
 }
 
 body.escuro .entrada-form-container {
-    background: var(--cor-secundaria);
     color: var(--texto-conteudo-escuro);
+    background: var(--cor-secundaria);
 }
 
 .entrada-form-row {
@@ -1286,8 +1318,23 @@ body.escuro .saida-filtros select {
 
 body.escuro .saida-container,
 body.escuro .saida-form-container {
-    background: var(--cor-secundaria);
     color: var(--texto-conteudo-escuro);
+    background: var(--cor-secundaria);
+}
+
+.form-configuracoes {
+    background: #f7f7fa;
+    border-radius: var(--raio-campo, 8px);
+    padding: 18px;
+    margin: 18px auto 0 auto;
+    max-width: 700px;
+    box-shadow: 0 2px 8px var(--sombra-leve, #0001);
+    font-size: 1rem;
+}
+
+body.escuro .form-configuracoes {
+    color: var(--texto-conteudo-escuro);
+    background: var(--cor-secundaria);
 }
 
 @media (max-width: 700px) {
@@ -1410,10 +1457,10 @@ body.escuro .saida-form-container {
     background: #fff;
     border-radius: 10px;
     box-shadow: 0 2px 8px var(--sombra-leve);
-    padding: 10px 30px; 
+    padding: 10px 30px;
     width: 80%;
-    border-left: 8px solid var(--cor-principal); 
-    font-size: 1.12rem; 
+    border-left: 8px solid var(--cor-principal);
+    font-size: 1.12rem;
     margin-bottom: 10px;
 }
 
@@ -1539,7 +1586,6 @@ body.escuro .historico-card {
     }
 
     .barra-lateral .cabecalho {
-        flex: 1;
         justify-content: flex-start;
         min-width: 0;
         padding: 10px 12px;

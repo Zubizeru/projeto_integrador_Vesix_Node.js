@@ -5,6 +5,7 @@ const barraLateral = document.querySelector('#barraLateral');
 const botaoMenu = document.querySelector('#botaoMenu');
 const logo = document.querySelector('#logoTexto');
 const opcoesMenu = document.querySelectorAll('#opcoesMenu li');
+const botaoConfiguracoes = document.getElementById('botaoConfiguracoes');
 const conteudoPrincipal = document.querySelector('#conteudoPrincipal');
 const botaoTema = document.querySelector('#botaoTema');
 const botaoLogout = document.querySelector('#botaoLogout');
@@ -70,7 +71,8 @@ function mostrarSecao(secaoId) {
         'secaoMovimentacao',
         'secaoEntrada',
         'secaoSaida',
-        'secaoSolicitacoes'
+        'secaoSolicitacoes',
+        'secaoConfiguracoes'
     ];
     secoes.forEach(id => {
         const secao = document.getElementById(id);
@@ -78,6 +80,16 @@ function mostrarSecao(secaoId) {
             secao.classList.toggle('ativo', id === secaoId);
         }
     });
+
+    if (secaoId !== 'secaoEntrada') {
+        const entradaFormContainer = document.querySelector('#entradaFormContainer');
+        if (entradaFormContainer) entradaFormContainer.innerHTML = '';
+    }
+    if (secaoId !== 'secaoSaida') {
+        const saidaFormContainer = document.querySelector('#saidaFormContainer');
+        if (saidaFormContainer) saidaFormContainer.innerHTML = '';
+    }
+
 }
 
 function ehMobile() {
@@ -229,6 +241,7 @@ if (formularioAdicionarProduto) {
                             formularioAdicionarProduto.removeAttribute('data-editar');
                             document.querySelector('.modal-adicionar').textContent = 'Adicionar';
                             carregarEstoque();
+                            carregarGraficosDashboard(); // Atualiza os gráficos após editar produto
                         } else {
                             showToast(resposta.erro || 'Erro ao editar produto.', null);
                         }
@@ -249,6 +262,7 @@ if (formularioAdicionarProduto) {
                             camposProduto.forEach(limparErroProduto);
                             sobreposicaoModal.style.display = 'none';
                             carregarEstoque();
+                            carregarGraficosDashboard(); // Atualiza os gráficos após adicionar produto
                         } else {
                             showToast(resposta.erro || 'Erro ao cadastrar produto.', null);
                         }
@@ -318,6 +332,10 @@ for (let item of opcoesMenu) {
                 mostrarSecao('secaoSolicitacoes');
                 carregarSolicitacoes();
                 break;
+            case 'configuracoes':
+                mostrarSecao('secaoConfiguracoes');
+                carregarDadosConta();
+                break;
         }
     });
 }
@@ -336,6 +354,13 @@ if (botaoGerenciarUsuario) {
             botaoGerenciarUsuario.classList.remove('botao-versolicitacao');
             botaoGerenciarUsuario.classList.add('botao-gerenciarusuario');
         }
+    });
+}
+
+if (botaoConfiguracoes) {
+    botaoConfiguracoes.addEventListener('click', function () {
+        mostrarSecao('secaoConfiguracoes');
+        carregarDadosConta();
     });
 }
 
@@ -722,7 +747,10 @@ function montarTabelaEstoque(produtos, filtro = '') {
                 if (confirmado) {
                     fetch(`/api/estoque/produtos/${idEstoque}`, { method: 'DELETE' })
                         .then(res => res.json())
-                        .then(() => carregarEstoque());
+                        .then(() => {
+                            carregarEstoque();
+                            carregarGraficosDashboard(); // Atualiza o dashboard após excluir
+                        });
                 }
             });
         });
@@ -798,6 +826,10 @@ function carregarEstoque() {
     fetch('/api/estoque/lojas')
         .then(res => res.json())
         .then(lojasUsuario => {
+            if (!Array.isArray(lojasUsuario)) {
+                showToast('Você não está autenticado ou ocorreu um erro ao buscar lojas.');
+                return;
+            }
             lojasPermitidasGlobal = lojasUsuario.map(l => l.id);
             lojaSelecionadaIdGlobal = null;
             montarSeletorLoja(lojasUsuario, lojaSelecionadaIdGlobal, (novaLojaId) => {
@@ -996,6 +1028,7 @@ function adicionarListenersFormEntrada(tipo) {
                             showToast('Entrada registrada!');
                             entradaFormContainer.innerHTML = '';
                             carregarProdutosEntrada(idLojaOrigem);
+                            carregarGraficosDashboard();
                         } else {
                             showToast(resposta.erro || 'Erro ao registrar entrada.');
                         }
@@ -1004,6 +1037,11 @@ function adicionarListenersFormEntrada(tipo) {
                 const lojaDestino = formEntrada.lojaDestino.value;
                 if (!lojaDestino) {
                     showToast('Selecione a loja de destino!');
+                    return;
+                }
+
+                if (lojaDestino === idLojaOrigem) {
+                    showToast('Não é possível transferir para a mesma loja!');
                     return;
                 }
                 fetch('/api/estoque/transferencia', {
@@ -1017,6 +1055,7 @@ function adicionarListenersFormEntrada(tipo) {
                             showToast('Transferência realizada!');
                             entradaFormContainer.innerHTML = '';
                             carregarProdutosEntrada(idLojaOrigem);
+                            carregarGraficosDashboard();
                         } else {
                             showToast(resposta.erro || 'Erro ao transferir.');
                         }
@@ -1202,6 +1241,7 @@ function adicionarListenersFormSaida() {
                         showToast('Saída registrada!');
                         document.getElementById('saidaFormContainer').innerHTML = '';
                         carregarProdutosSaida(idLoja);
+                        carregarGraficosDashboard();
                     } else {
                         showToast(resposta.erro || 'Erro ao registrar saída.');
                     }
@@ -1230,17 +1270,26 @@ document.addEventListener('DOMContentLoaded', function () {
 // ==============================
 // DASHBOARD - GRÁFICOS
 // ==============================
+let chartMovimentacao = null;
+let chartPizzaLoja = null;
+let chartLucro = null;
+let chartMenorEstoque = null;
+let chartMaisVendidos = null;
+let chartEntradasSaidas = null;
+
 function carregarGraficosDashboard() {
     // Movimentação mensal
     fetch('/api/dashboard/movimentacao-mensal')
         .then(res => res.json())
         .then(dados => {
-            const ctx = document.getElementById('graficoMovimentacao').getContext('2d');
-            const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-            const labels = dados.map(d => meses[d.mes-1]);
+            const ctx = document.querySelector('#graficoMovimentacao').getContext('2d');
+            const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+            const labels = dados.map(d => meses[d.mes - 1]);
             const entradas = dados.map(d => d.entradas);
             const saidas = dados.map(d => d.saidas);
-            new Chart(ctx, {
+
+            if (chartMovimentacao) chartMovimentacao.destroy();
+            chartMovimentacao = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels,
@@ -1256,8 +1305,9 @@ function carregarGraficosDashboard() {
     fetch('/api/dashboard/produtos-por-loja')
         .then(res => res.json())
         .then(dados => {
-            const ctx = document.getElementById('graficoPizzaLoja').getContext('2d');
-            new Chart(ctx, {
+            const ctx = document.querySelector('#graficoPizzaLoja').getContext('2d');
+            if (chartPizzaLoja) chartPizzaLoja.destroy();
+            chartPizzaLoja = new Chart(ctx, {
                 type: 'pie',
                 data: {
                     labels: dados.map(l => l.loja),
@@ -1273,8 +1323,9 @@ function carregarGraficosDashboard() {
     fetch('/api/dashboard/lucro')
         .then(res => res.json())
         .then(lucro => {
-            const ctx = document.getElementById('graficoLucro').getContext('2d');
-            new Chart(ctx, {
+            const ctx = document.querySelector('#graficoLucro').getContext('2d');
+            if (chartLucro) chartLucro.destroy();
+            chartLucro = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: ['Total Comprado', 'Total Vendido'],
@@ -1284,7 +1335,71 @@ function carregarGraficosDashboard() {
                     }]
                 }
             });
-            document.getElementById('lucroValor').innerHTML = `<b>Margem de Lucro:</b> R$ ${(lucro.total_venda - lucro.total_compra).toFixed(2)}`;
+            document.querySelector('#lucroValor').innerHTML = `<b>Margem de Lucro:</b> R$ ${(lucro.total_venda - lucro.total_compra).toFixed(2)}`;
+        });
+
+    // Menor Estoque
+    fetch('/api/dashboard/menor-estoque')
+        .then(res => res.json())
+        .then(dados => {
+            const ctx = document.querySelector('#graficoMenorEstoque').getContext('2d');
+            if (chartMenorEstoque) chartMenorEstoque.destroy();
+            chartMenorEstoque = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: dados.map(d => d.nome),
+                    datasets: [{
+                        label: 'Qtd em Estoque',
+                        data: dados.map(d => d.total),
+                        backgroundColor: 'rgba(255, 99, 132, 0.7)'
+                    }]
+                }
+            });
+        });
+
+    // Mais Vendidos
+    fetch('/api/dashboard/mais-vendidos')
+        .then(res => res.json())
+        .then(dados => {
+            const ctx = document.querySelector('#graficoMaisVendidos').getContext('2d');
+            if (chartMaisVendidos) chartMaisVendidos.destroy();
+            chartMaisVendidos = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: dados.map(d => d.nome),
+                    datasets: [{
+                        label: 'Total Vendido',
+                        data: dados.map(d => d.total_vendido),
+                        backgroundColor: 'rgba(54, 162, 235, 0.7)'
+                    }]
+                }
+            });
+        });
+
+    // Entradas x Saídas por Produto
+    fetch('/api/dashboard/entradas-saidas-produto')
+        .then(res => res.json())
+        .then(dados => {
+            const ctx = document.querySelector('#graficoEntradasSaidas').getContext('2d');
+            if (chartEntradasSaidas) chartEntradasSaidas.destroy();
+            chartEntradasSaidas = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: dados.map(d => d.nome),
+                    datasets: [
+                        {
+                            label: 'Entradas',
+                            data: dados.map(d => Number(d.entradas) || 0), // <-- Garante número
+                            backgroundColor: 'rgba(75, 192, 192, 0.7)'
+                        },
+                        {
+                            label: 'Saídas',
+                            data: dados.map(d => Number(d.saidas) || 0), // <-- Garante número
+                            backgroundColor: 'rgba(255, 159, 64, 0.7)'
+                        }
+                    ]
+                }
+            });
         });
 }
 
@@ -1312,14 +1427,27 @@ function carregarHistoricoMovimentacao() {
                 <h1 class="titulosecao">Movimentação</h1>
                 <p class="subtitulo-secao">Histórico das últimas ações no estoque.</p>
                 <div class="historico-cards">
-                    ${historico.map(item => `
+                    ${historico.map(item => {
+                let nomeProduto = item.produto_nome;
+                let skuProduto = item.sku;
+                if ((!nomeProduto || nomeProduto === '-') || (!skuProduto || skuProduto === '-')) {
+                    try {
+                        const detalhesObj = item.detalhes ? JSON.parse(item.detalhes) : {};
+                        nomeProduto = nomeProduto || detalhesObj.nome || '-';
+                        skuProduto = skuProduto || detalhesObj.sku || '-';
+                    } catch (e) {
+                        nomeProduto = nomeProduto || '-';
+                        skuProduto = skuProduto || '-';
+                    }
+                }
+                return `
                         <div class="historico-card historico-${item.tipo_acao}">
                             <div class="historico-cabecalho">
                                 <span class="historico-tipo">${item.tipo_acao.toUpperCase()}</span>
                                 <span class="historico-data">${new Date(item.data_acao).toLocaleString('pt-BR')}</span>
                             </div>
                             <div class="historico-info">
-                                <b>Produto:</b> ${item.produto_nome || '-'} (SKU: ${item.sku || '-'})<br>
+                                <b>Produto:</b> ${nomeProduto} (SKU: ${skuProduto})<br>
                                 <b>Usuário:</b> ${item.usuario_nome || '-'}
                                 ${item.quantidade ? `<br><b>Quantidade:</b> ${item.quantidade}` : ''}
                                 ${item.loja_origem_nome ? `<br><b>Loja Origem:</b> ${item.loja_origem_nome}` : ''}
@@ -1327,14 +1455,165 @@ function carregarHistoricoMovimentacao() {
                                 ${item.detalhes ? `<br><b>Detalhes:</b> ${item.detalhes}` : ''}
                             </div>
                         </div>
-                    `).join('')}
+                        `;
+            }).join('')}
                 </div>
             `;
         });
 }
 
 // ==============================
-// 13. LOGOUT COM CONFIRMAÇÃO
+// 13. CARREGAR DADOS DA CONTA
+// ==============================
+function carregarDadosConta() {
+    fetch('/api/usuario/dados')
+        .then(res => res.json())
+        .then(user => {
+            document.getElementById('config-nome').value = user.nome || '';
+            document.getElementById('config-email').value = user.email || '';
+            document.getElementById('config-senha').value = '';
+            document.getElementById('config-confirmar-senha').value = '';
+            // Adiciona classe 'filled' se já tiver valor
+            document.querySelectorAll('#formConta input').forEach(input => {
+                if (input.value.trim() !== '') input.classList.add('filled');
+                else input.classList.remove('filled');
+            });
+        });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const formConta = document.getElementById('formConta');
+    if (!formConta) return;
+
+    let validacaoAtiva = false;
+
+    function marcarErro(input, condicao, mensagem) {
+        const campo = input.closest('.modal-campo');
+        let msg = campo.querySelector('.error-message');
+        if (!msg) {
+            msg = document.createElement('div');
+            msg.className = 'error-message';
+            campo.appendChild(msg);
+        }
+        if (condicao) {
+            input.classList.add('erro');
+            campo.classList.add('erro');
+            msg.textContent = mensagem;
+            input.classList.add('bounce');
+            setTimeout(() => input.classList.remove('bounce'), 500);
+            return 1;
+        } else {
+            input.classList.remove('erro');
+            campo.classList.remove('erro');
+            msg.textContent = '';
+            return 0;
+        }
+    }
+
+    function validarCamposConfig() {
+        const nome = formConta.nome;
+        const email = formConta.email;
+        const senha = formConta.senha;
+        const confirmarSenha = formConta.confirmarSenha;
+        let erro = 0;
+
+        erro += marcarErro(nome, nome.value.trim() === '', 'Informe seu nome.');
+        erro += marcarErro(email, !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value) || /\s/.test(email.value), 'Email inválido ou com espaço.');
+        if (senha.value || confirmarSenha.value) {
+            erro += marcarErro(senha, senha.value.length < 6, 'A senha deve ter pelo menos 6 caracteres.');
+            erro += marcarErro(confirmarSenha, senha.value !== confirmarSenha.value, 'As senhas não coincidem.');
+        } else {
+            marcarErro(senha, false, '');
+            marcarErro(confirmarSenha, false, '');
+        }
+        return erro;
+    }
+
+    // Só mostra erro depois do submit
+    formConta.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', function () {
+            if (validacaoAtiva) validarCamposConfig();
+        });
+        input.addEventListener('blur', function () {
+            if (this.value) this.classList.add('filled');
+            else this.classList.remove('filled');
+            if (validacaoAtiva) validarCamposConfig();
+        });
+    });
+
+    formConta.addEventListener('submit', function (e) {
+        e.preventDefault();
+        validacaoAtiva = true;
+        const erro = validarCamposConfig();
+        if (erro) return;
+
+        fetch('/api/usuario/atualizar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                nome: formConta.nome.value,
+                email: formConta.email.value,
+                senha: formConta.senha.value
+            })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.sucesso) {
+                    showToast('Dados atualizados com sucesso!');
+                    carregarDadosConta();
+                    validacaoAtiva = false;
+                    // Limpa erros ao salvar com sucesso
+                    formConta.querySelectorAll('input').forEach(input => marcarErro(input, false, ''));
+                } else {
+                    showToast(data.erro || 'Erro ao atualizar dados.');
+                }
+            })
+            .catch(() => showToast('Erro ao atualizar dados.'));
+    });
+});
+
+function validarCampoConfiguracoes(input) {
+    const form = input.form;
+    const nome = form.nome;
+    const email = form.email;
+    const senha = form.senha;
+    const confirmarSenha = form.confirmarSenha;
+
+    if (input === nome) {
+        marcarErro(nome, nome.value.trim() === '', 'Informe seu nome.');
+    }
+    if (input === email) {
+        marcarErro(email, !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value) || /\s/.test(email.value), 'Email inválido ou com espaço.');
+    }
+    if (input === senha) {
+        marcarErro(senha, senha.value && senha.value.length < 6, 'A senha deve ter pelo menos 6 caracteres.');
+        marcarErro(confirmarSenha, senha.value !== confirmarSenha.value, 'As senhas não coincidem.');
+    }
+    if (input === confirmarSenha) {
+        marcarErro(confirmarSenha, senha.value !== confirmarSenha.value, 'As senhas não coincidem.');
+    }
+}
+
+function marcarErro(input, condicao, mensagem) {
+    const campo = input.closest('.modal-campo');
+    const msg = campo.querySelector('.error-message');
+    if (condicao) {
+        input.classList.add('erro');
+        campo.classList.add('erro');
+        if (msg) msg.textContent = mensagem;
+        input.classList.add('bounce');
+        setTimeout(() => input.classList.remove('bounce'), 500);
+        return 1;
+    } else {
+        input.classList.remove('erro');
+        campo.classList.remove('erro');
+        if (msg) msg.textContent = '';
+        return 0;
+    }
+}
+
+// ==============================
+// 14. LOGOUT COM CONFIRMAÇÃO
 // ==============================
 botaoLogout.addEventListener('click', function () {
     showToastConfirm('Tem certeza que deseja sair?', function (confirmado) {

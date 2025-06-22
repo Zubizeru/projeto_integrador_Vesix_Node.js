@@ -231,12 +231,11 @@ app.get('/admin/usuarios/todos', (req, res) => {
 app.get('/api/dashboard/movimentacao-mensal', (req, res) => {
     db.query(`
         SELECT 
-            MONTH(el.data_registro) as mes,
-            SUM(COALESCE(ee.quantidade,0)) as entradas,
-            SUM(COALESCE(es.quantidade,0)) as saidas
-        FROM estoque_loja el
-        LEFT JOIN Entrada_Estoque ee ON ee.id_produto = el.id_produto AND MONTH(ee.data_entrada) = MONTH(el.data_registro)
-        LEFT JOIN Saida_Estoque es ON es.id_produto = el.id_produto AND MONTH(es.data_saida) = MONTH(el.data_registro)
+            MONTH(data_acao) as mes,
+            SUM(CASE WHEN tipo_acao = 'entrada' THEN quantidade ELSE 0 END) as entradas,
+            SUM(CASE WHEN tipo_acao = 'saida' THEN quantidade ELSE 0 END) as saidas
+        FROM Historico_Estoque
+        WHERE tipo_acao IN ('entrada', 'saida')
         GROUP BY mes
         ORDER BY mes
     `, (err, rows) => {
@@ -244,6 +243,7 @@ app.get('/api/dashboard/movimentacao-mensal', (req, res) => {
         res.json(rows);
     });
 });
+
 
 // Produtos por loja
 app.get('/api/dashboard/produtos-por-loja', (req, res) => {
@@ -260,71 +260,147 @@ app.get('/api/dashboard/produtos-por-loja', (req, res) => {
 
 // Margem de lucro
 app.get('/api/dashboard/lucro', (req, res) => {
+    db.query(
+        `SELECT tipo_acao, quantidade, detalhes FROM Historico_Estoque WHERE tipo_acao IN ('entrada', 'saida')`,
+        (err, rows) => {
+            if (err) return res.status(500).json({ total_compra: 0, total_venda: 0 });
+
+            let total_compra = 0;
+            let total_venda = 0;
+
+            rows.forEach(row => {
+                let preco_compra = 0, preco_venda = 0;
+                try {
+                    const detalhes = row.detalhes ? JSON.parse(row.detalhes) : {};
+                    preco_compra = Number(detalhes.preco_compra) || 0;
+                    preco_venda = Number(detalhes.preco_venda) || 0;
+                } catch (e) {}
+
+                if (row.tipo_acao === 'entrada') {
+                    total_compra += row.quantidade * preco_compra;
+                } else if (row.tipo_acao === 'saida') {
+                    total_venda += row.quantidade * preco_venda;
+                }
+            });
+
+            res.json({ total_compra, total_venda });
+        }
+    );
+});
+
+// Produtos com menor estoque (top 10)
+app.get('/api/dashboard/menor-estoque', (req, res) => {
     db.query(`
-        SELECT 
-            (SELECT SUM(ee.quantidade * p.preco_compra) FROM Entrada_Estoque ee JOIN Produto p ON p.id_produto = ee.id_produto) as total_compra,
-            (SELECT SUM(se.quantidade * el.preco_venda) FROM Saida_Estoque se JOIN estoque_loja el ON el.id_produto = se.id_produto) as total_venda
+        SELECT p.nome, SUM(el.quantidade) as total
+        FROM estoque_loja el
+        JOIN Produto p ON p.id_produto = el.id_produto
+        GROUP BY p.id_produto
+        ORDER BY total ASC
+        LIMIT 10
     `, (err, rows) => {
-        if (err) return res.status(500).json({ total_compra: 0, total_venda: 0 });
-        res.json(rows[0]);
+        if (err) return res.status(500).json([]);
+        res.json(rows);
     });
 });
 
+// Produtos mais vendidos (top 10)
+app.get('/api/dashboard/mais-vendidos', (req, res) => {
+    db.query(`
+        SELECT p.nome, SUM(h.quantidade) as total_vendido
+        FROM Historico_Estoque h
+        JOIN Produto p ON p.id_produto = h.id_produto
+        WHERE h.tipo_acao = 'saida'
+        GROUP BY p.id_produto
+        ORDER BY total_vendido DESC
+        LIMIT 10
+    `, (err, rows) => {
+        if (err) return res.status(500).json([]);
+        res.json(rows);
+    });
+});
+
+// Entradas x Saídas por produto (top 10 por movimentação)
+app.get('/api/dashboard/entradas-saidas-produto', (req, res) => {
+    db.query(`
+        SELECT 
+            p.nome,
+            SUM(CASE WHEN h.tipo_acao = 'entrada' THEN h.quantidade ELSE 0 END) as entradas,
+            SUM(CASE WHEN h.tipo_acao = 'saida' THEN h.quantidade ELSE 0 END) as saidas
+        FROM Historico_Estoque h
+        JOIN Produto p ON p.id_produto = h.id_produto
+        WHERE h.tipo_acao IN ('entrada', 'saida')
+          AND EXISTS (SELECT 1 FROM estoque_loja el WHERE el.id_produto = p.id_produto)
+        GROUP BY p.id_produto
+        ORDER BY (SUM(CASE WHEN h.tipo_acao = 'entrada' THEN h.quantidade ELSE 0 END) + SUM(CASE WHEN h.tipo_acao = 'saida' THEN h.quantidade ELSE 0 END)) DESC
+        LIMIT 10
+    `, (err, rows) => {
+        if (err) return res.status(500).json([]);
+        res.json(rows);
+    });
+});
 // ==============================
 // ROTAS DE ENVIO DE PRODUTOS
 // ==============================
 
 app.post('/produtos', (req, res) => {
     const { nome, sku, precoCompra, fornecedor, localizacao, quantidade, precoVenda } = req.body;
-    const usuario_id = req.session.usuario_id || null;
 
-    // 0. Verifica se o SKU já existe
-    db.query('SELECT id_produto FROM Produto WHERE sku = ?', [sku], (err, rows) => {
-        if (err) return res.status(500).json({ sucesso: false, erro: 'Erro ao verificar SKU.' });
-        if (rows.length > 0) {
-            return res.status(400).json({ sucesso: false, erro: 'Produto já cadastrado com este SKU.' });
-        }
-
-        // 1. Inserir Produto diretamente com fornecedor_nome
+    function cadastrarProdutoComIdLoja(id_loja) {
         db.query(
             'INSERT INTO Produto (nome, sku, preco_compra, fornecedor_nome) VALUES (?, ?, ?, ?)',
             [nome, sku, precoCompra, fornecedor],
-            (err3, resultProd) => {
-                if (err3) return res.status(500).json({ sucesso: false, erro: 'Erro ao inserir produto.' });
-                const id_produto = resultProd.insertId;
-
-                // 2. Buscar id_loja
-                db.query('SELECT id FROM loja WHERE nome = ?', [localizacao], (err4, lojaRows) => {
-                    if (err4 || lojaRows.length === 0) return res.status(500).json({ sucesso: false, erro: 'Erro ao buscar loja.' });
-                    const id_loja = lojaRows[0].id;
-
-                    // 3. Inserir estoque_loja
-                    db.query(
-                        'INSERT INTO estoque_loja (id_produto, id_loja, quantidade, preco_venda) VALUES (?, ?, ?, ?)',
-                        [id_produto, id_loja, quantidade, precoVenda],
-                        (err5, resultEstoque) => {
-                            if (err5) return res.status(500).json({ sucesso: false, erro: 'Erro ao inserir estoque.' });
-
-                            // 4. Registrar no histórico
-                            db.query(
-                                'INSERT INTO Historico_Estoque (tipo_acao, id_produto, id_estoque_loja, id_loja_origem, quantidade, usuario_id, detalhes) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                                [
-                                    'adicao',
-                                    id_produto,
-                                    resultEstoque.insertId,
-                                    id_loja,
-                                    quantidade,
-                                    usuario_id,
-                                    JSON.stringify({ nome, sku })
-                                ],
-                                () => res.json({ sucesso: true })
-                            );
+            (err, result) => {
+                if (err) {
+                    console.error('Erro ao cadastrar produto:', err);
+                    return res.json({ sucesso: false, erro: 'Erro ao cadastrar produto.' });
+                }
+                const id_produto = result.insertId;
+                db.query(
+                    'INSERT INTO estoque_loja (id_produto, id_loja, quantidade, preco_venda) VALUES (?, ?, ?, ?)',
+                    [id_produto, id_loja, quantidade, precoVenda],
+                    (err2, result2) => {
+                        if (err2) {
+                            console.error('Erro ao cadastrar estoque:', err2);
+                            return res.json({ sucesso: false, erro: 'Erro ao cadastrar estoque.' });
                         }
-                    );
-                });
+                        const id_estoque_loja = result2.insertId;
+                        db.query(
+                            'INSERT INTO Historico_Estoque (tipo_acao, id_produto, id_estoque_loja, id_loja_origem, quantidade, usuario_id, detalhes) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                            [
+                                'entrada',
+                                id_produto,
+                                id_estoque_loja,
+                                id_loja,
+                                quantidade,
+                                req.session.usuario_id || 1,
+                                JSON.stringify({ nome, sku, preco_compra: precoCompra, preco_venda: precoVenda })
+                            ],
+                            (err3) => {
+                                if (err3) {
+                                    console.error('Erro ao registrar histórico:', err3);
+                                    return res.json({ sucesso: false, erro: 'Erro ao registrar histórico.' });
+                                }
+                                res.json({ sucesso: true });
+                            }
+                        );
+                    }
+                );
             }
         );
-    });
+    }
+
+    // Se localizacao for número, já é o id da loja
+    if (!isNaN(localizacao)) {
+        cadastrarProdutoComIdLoja(Number(localizacao));
+    } else {
+        // Se for nome, busca o id correspondente
+        db.query('SELECT id FROM loja WHERE nome = ?', [localizacao], (err, rows) => {
+            if (err || !rows.length) {
+                return res.json({ sucesso: false, erro: 'Loja não encontrada.' });
+            }
+            cadastrarProdutoComIdLoja(rows[0].id);
+        });
+    }
 });
 
 // 1. Lojas do usuário
@@ -445,31 +521,66 @@ app.put('/api/estoque/produtos/:id_estoque', (req, res) => {
 
 // Deletar produto do estoque (excluir estoque_loja)
 app.delete('/api/estoque/produtos/:id_estoque', (req, res) => {
+    console.log('Tentando deletar estoque:', req.params.id_estoque);
     const idEstoque = req.params.id_estoque;
-    const usuario_id = req.session.usuario_id;
+    const usuario_id = req.session.usuario_id || 1;
 
-    // Busca dados antes de deletar
-    db.query('SELECT id_produto, id_loja, quantidade FROM estoque_loja WHERE id = ?', [idEstoque], (err, rows) => {
-        if (err || !rows.length) return res.status(404).json({ sucesso: false, erro: 'Estoque não encontrado.' });
-        const { id_produto, id_loja, quantidade } = rows[0];
+    db.query('SELECT el.id_produto, el.id_loja, el.quantidade, p.nome, p.sku FROM estoque_loja el INNER JOIN Produto p ON p.id_produto = el.id_produto WHERE el.id = ?', [idEstoque], (err, rows) => {
+        if (err) {
+            console.error('Erro ao buscar estoque:', err);
+            return res.status(404).json({ sucesso: false, erro: 'Estoque não encontrado.' });
+        }
+        if (!rows.length) {
+            console.error('Estoque não encontrado para exclusão.');
+            return res.status(404).json({ sucesso: false, erro: 'Estoque não encontrado.' });
+        }
+        const { id_produto, id_loja, quantidade, nome, sku } = rows[0];
 
-        // Deleta o estoque
-        db.query('DELETE FROM estoque_loja WHERE id = ?', [idEstoque], (err2) => {
-            if (err2) return res.status(500).json({ sucesso: false, erro: 'Erro ao excluir estoque.' });
+        db.query('DELETE FROM estoque_loja WHERE id = ?', [idEstoque], (err2, result) => {
+            if (err2) {
+                console.error('Erro ao excluir estoque:', err2);
+                return res.status(500).json({ sucesso: false, erro: 'Erro ao excluir estoque.' });
+            }
+            console.log('DELETE result:', result);
 
-            // REGISTRA NO HISTÓRICO
-            db.query(
-                'INSERT INTO Historico_Estoque (tipo_acao, id_produto, id_estoque_loja, id_loja_origem, quantidade, usuario_id) VALUES (?, ?, ?, ?, ?, ?)',
-                [
-                    'exclusao',
-                    id_produto,
-                    idEstoque,
-                    id_loja,
-                    quantidade,
-                    usuario_id
-                ],
-                () => res.json({ sucesso: true })
-            );
+            db.query('SELECT COUNT(*) as total FROM estoque_loja WHERE id_produto = ?', [id_produto], (errCheck, rowsCheck) => {
+                if (errCheck) {
+                    console.error('Erro ao checar produto em outras lojas:', errCheck);
+                    return res.status(500).json({ sucesso: false, erro: 'Erro ao checar produto.' });
+                }
+
+                // 1. Sempre registra o histórico ANTES de deletar o produto
+                db.query(
+                    'INSERT INTO Historico_Estoque (tipo_acao, id_produto, id_estoque_loja, id_loja_origem, quantidade, usuario_id, detalhes) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                    [
+                        'exclusao',
+                        id_produto,
+                        null,
+                        id_loja,
+                        quantidade,
+                        usuario_id,
+                        JSON.stringify({ nome, sku })
+                    ],
+                    (err3) => {
+                        if (err3) {
+                            console.error('Erro ao registrar histórico de exclusão:', err3);
+                            return res.status(500).json({ sucesso: false, erro: 'Erro ao registrar histórico.' });
+                        }
+
+                        // 2. Só depois de registrar o histórico, deleta o produto se necessário
+                        if (rowsCheck[0].total === 0) {
+                            db.query('DELETE FROM Produto WHERE id_produto = ?', [id_produto], (errDelProd) => {
+                                if (errDelProd) {
+                                    console.error('Erro ao deletar produto:', errDelProd);
+                                }
+                                res.json({ sucesso: true });
+                            });
+                        } else {
+                            res.json({ sucesso: true });
+                        }
+                    }
+                );
+            });
         });
     });
 });
@@ -507,15 +618,30 @@ app.post('/api/estoque/entrada', (req, res) => {
             if (err) return res.status(500).json({ sucesso: false, erro: 'Erro ao registrar entrada.' });
 
             // Busca dados para registrar no histórico
-            db.query('SELECT id_produto, id_loja FROM estoque_loja WHERE id = ?', [idEstoque], (err2, rows) => {
-                if (err2 || !rows.length) return res.json({ sucesso: true }); // estoque atualizado, mas não registrou histórico
-                const { id_produto, id_loja } = rows[0];
-                db.query(
-                    'INSERT INTO Historico_Estoque (tipo_acao, id_produto, id_estoque_loja, id_loja_origem, quantidade, usuario_id) VALUES (?, ?, ?, ?, ?, ?)',
-                    ['entrada', id_produto, idEstoque, id_loja, quantidade, usuario_id],
-                    () => res.json({ sucesso: true })
-                );
-            });
+            db.query(
+                `SELECT el.id_produto, el.id_loja, p.nome, p.sku, p.preco_compra, el.preco_venda
+                FROM estoque_loja el
+                INNER JOIN Produto p ON p.id_produto = el.id_produto
+                WHERE el.id = ?`,
+                [idEstoque],
+                (err2, rows) => {
+                    if (err2 || !rows.length) return res.json({ sucesso: true });
+                    const { id_produto, id_loja, nome, sku, preco_compra, preco_venda } = rows[0];
+                    db.query(
+                        'INSERT INTO Historico_Estoque (tipo_acao, id_produto, id_estoque_loja, id_loja_origem, quantidade, usuario_id, detalhes) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                        [
+                            'entrada',
+                            id_produto,
+                            idEstoque,
+                            id_loja,
+                            quantidade,
+                            usuario_id,
+                            JSON.stringify({ nome, sku, preco_compra, preco_venda })
+                        ],
+                        () => res.json({ sucesso: true })
+                    );
+                }
+            );
         }
     );
 });
@@ -537,43 +663,81 @@ app.post('/api/estoque/transferencia', (req, res) => {
             if (rows2[0].quantidade < quantidade) {
                 return res.status(400).json({ sucesso: false, erro: 'Quantidade insuficiente para transferência.' });
             }
-            const preco_venda = rows2[0].preco_venda;
+            const preco_venda_origem = rows2[0].preco_venda;
 
-            // Remove do estoque origem
-            db.query('UPDATE estoque_loja SET quantidade = quantidade - ? WHERE id = ?', [quantidade, idEstoque], (err3) => {
-                if (err3) return res.status(500).json({ sucesso: false, erro: 'Erro ao debitar estoque de origem.' });
-
-                // Verifica se já existe estoque_loja para o produto na loja destino
-                db.query('SELECT id FROM estoque_loja WHERE id_produto = ? AND id_loja = ?', [id_produto, lojaDestino], (err4, rows4) => {
-                    if (err4) return res.status(500).json({ sucesso: false, erro: 'Erro ao buscar estoque destino.' });
-
-                    const finalizar = () => {
-                        // Registra no histórico de movimentação
-                        db.query(
-                            'INSERT INTO Historico_Estoque (tipo_acao, id_produto, id_loja_origem, id_loja_destino, quantidade, usuario_id) VALUES (?, ?, ?, ?, ?, ?)',
-                            ['transferencia', id_produto, id_loja, lojaDestino, quantidade, usuario_id],
-                            () => res.json({ sucesso: true })
-                        );
-                    };
-
-                    if (rows4.length > 0) {
-                        // Já existe: soma a quantidade
-                        db.query('UPDATE estoque_loja SET quantidade = quantidade + ? WHERE id = ?', [quantidade, rows4[0].id], (err5) => {
-                            if (err5) return res.status(500).json({ sucesso: false, erro: 'Erro ao creditar estoque destino.' });
-                            finalizar();
-                        });
-                    } else {
-                        // Não existe: cria novo registro
-                        db.query(
-                            'INSERT INTO estoque_loja (id_produto, id_loja, quantidade, preco_venda) VALUES (?, ?, ?, ?)',
-                            [id_produto, lojaDestino, quantidade, preco_venda],
-                            (err6) => {
-                                if (err6) return res.status(500).json({ sucesso: false, erro: 'Erro ao criar estoque destino.' });
-                                finalizar();
+            // Busca nome, sku e preco_compra do produto para salvar no histórico
+            db.query('SELECT nome, sku, preco_compra FROM Produto WHERE id_produto = ?', [id_produto], (errNome, prodRows) => {
+                let nome = '', sku = '', preco_compra = 0;
+                if (prodRows && prodRows[0]) {
+                    nome = prodRows[0].nome;
+                    sku = prodRows[0].sku;
+                    preco_compra = prodRows[0].preco_compra;
+                    continuarTransferencia();
+                } else {
+                    // Busca último histórico para recuperar detalhes
+                    db.query(
+                        'SELECT detalhes FROM Historico_Estoque WHERE id_produto = ? AND detalhes IS NOT NULL ORDER BY data_acao DESC LIMIT 1',
+                        [id_produto],
+                        (errHist, histRows) => {
+                            if (histRows && histRows[0] && histRows[0].detalhes) {
+                                try {
+                                    const detalhes = JSON.parse(histRows[0].detalhes);
+                                    nome = detalhes.nome || '';
+                                    sku = detalhes.sku || '';
+                                    preco_compra = detalhes.preco_compra || 0;
+                                } catch (e) {}
                             }
-                        );
-                    }
-                });
+                            continuarTransferencia();
+                        }
+                    );
+                }
+
+                function continuarTransferencia() {
+                    // Remove do estoque origem
+                    db.query('UPDATE estoque_loja SET quantidade = quantidade - ? WHERE id = ?', [quantidade, idEstoque], (err3) => {
+                        if (err3) return res.status(500).json({ sucesso: false, erro: 'Erro ao debitar estoque de origem.' });
+
+                        // Verifica se já existe estoque_loja para o produto na loja destino
+                        db.query('SELECT id FROM estoque_loja WHERE id_produto = ? AND id_loja = ?', [id_produto, lojaDestino], (err4, rows4) => {
+                            if (err4) return res.status(500).json({ sucesso: false, erro: 'Erro ao buscar estoque destino.' });
+
+                            const finalizar = () => {
+                                // Registra no histórico de movimentação
+                                db.query(
+                                    'INSERT INTO Historico_Estoque (tipo_acao, id_produto, id_loja_origem, id_loja_destino, quantidade, usuario_id, detalhes) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                                    [
+                                        'transferencia',
+                                        id_produto,
+                                        id_loja,
+                                        lojaDestino,
+                                        quantidade,
+                                        usuario_id,
+                                        JSON.stringify({ nome, sku, preco_compra, preco_venda: preco_venda_origem })
+                                    ],
+                                    () => res.json({ sucesso: true })
+                                );
+                            };
+
+                            if (rows4.length > 0) {
+                                // Já existe: soma a quantidade e atualiza o preco_venda
+                                db.query('UPDATE estoque_loja SET quantidade = quantidade + ?, preco_venda = ? WHERE id = ?', [quantidade, preco_venda_origem, rows4[0].id], (err5) => {
+                                    if (err5) return res.status(500).json({ sucesso: false, erro: 'Erro ao creditar estoque destino.' });
+                                    finalizar();
+                                });
+                            } else {
+                                // Não existe: cria novo registro com preco_venda do estoque de origem
+                                db.query(
+                                    'INSERT INTO estoque_loja (id_produto, id_loja, quantidade, preco_venda) VALUES (?, ?, ?, ?)',
+                                    [id_produto, lojaDestino, quantidade, preco_venda_origem],
+                                    (err6) => {
+                                        if (err6) return res.status(500).json({ sucesso: false, erro: 'Erro ao criar estoque destino.' });
+                                        finalizar();
+                                    }
+                                );
+                            }
+                        });
+                    });
+                }
             });
         });
     });
@@ -601,22 +765,65 @@ app.post('/api/estoque/saida', (req, res) => {
     if (!idEstoque || !quantidade || quantidade <= 0) {
         return res.status(400).json({ sucesso: false, erro: 'Dados inválidos.' });
     }
-    db.query('SELECT id_produto, id_loja, quantidade FROM estoque_loja WHERE id = ?', [idEstoque], (err, rows) => {
-        if (err || !rows.length) return res.status(400).json({ sucesso: false, erro: 'Estoque não encontrado.' });
-        if (rows[0].quantidade < quantidade) {
-            return res.status(400).json({ sucesso: false, erro: 'Quantidade insuficiente em estoque.' });
-        }
-        const { id_produto, id_loja } = rows[0];
-        db.query('UPDATE estoque_loja SET quantidade = quantidade - ? WHERE id = ?', [quantidade, idEstoque], (err2) => {
-            if (err2) return res.status(500).json({ sucesso: false, erro: 'Erro ao registrar saída.' });
+    // Busca todos os dados necessários para registrar no histórico
+    db.query(
+        `SELECT el.id_produto, el.id_loja, el.quantidade, p.nome, p.sku, p.preco_compra, el.preco_venda
+         FROM estoque_loja el
+         INNER JOIN Produto p ON p.id_produto = el.id_produto
+         WHERE el.id = ?`,
+        [idEstoque],
+        (err, rows) => {
+            if (err || !rows.length) return res.status(400).json({ sucesso: false, erro: 'Estoque não encontrado.' });
+            if (rows[0].quantidade < quantidade) {
+                return res.status(400).json({ sucesso: false, erro: 'Quantidade insuficiente em estoque.' });
+            }
+            const { id_produto, id_loja, nome, sku, preco_compra, preco_venda } = rows[0];
+            db.query('UPDATE estoque_loja SET quantidade = quantidade - ? WHERE id = ?', [quantidade, idEstoque], (err2) => {
+                if (err2) return res.status(500).json({ sucesso: false, erro: 'Erro ao registrar saída.' });
 
-            // REGISTRA NO HISTÓRICO
-            db.query(
-                'INSERT INTO Historico_Estoque (tipo_acao, id_produto, id_estoque_loja, id_loja_origem, quantidade, usuario_id) VALUES (?, ?, ?, ?, ?, ?)',
-                ['saida', id_produto, idEstoque, id_loja, quantidade, usuario_id],
-                () => res.json({ sucesso: true })
-            );
-        });
+                // REGISTRA NO HISTÓRICO com detalhes completos
+                db.query(
+                    'INSERT INTO Historico_Estoque (tipo_acao, id_produto, id_estoque_loja, id_loja_origem, quantidade, usuario_id, detalhes) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                    [
+                        'saida',
+                        id_produto,
+                        idEstoque,
+                        id_loja,
+                        quantidade,
+                        usuario_id,
+                        JSON.stringify({ nome, sku, preco_compra, preco_venda })
+                    ],
+                    () => res.json({ sucesso: true })
+                );
+            });
+        }
+    );
+});
+
+// ==============================
+// ROTAS DE USUÁRIO
+// ==============================
+
+// Buscar dados do usuário logado
+app.get('/api/usuario/dados', (req, res) => {
+    const usuario_id = req.session.usuario_id;
+    db.query('SELECT nome, email FROM usuario WHERE id = ?', [usuario_id], (err, rows) => {
+        if (err || !rows.length) return res.status(400).json({});
+        res.json(rows[0]);
+    });
+});
+
+// Atualizar dados do usuário logado
+app.post('/api/usuario/atualizar', (req, res) => {
+    const usuario_id = req.session.usuario_id;
+    const { nome, email, senha } = req.body;
+    if (!nome || !email) return res.json({ sucesso: false, erro: 'Nome e email obrigatórios.' });
+    const atualiza = senha
+        ? ['UPDATE usuario SET nome=?, email=?, senha=? WHERE id=?', [nome, email, bcrypt.hashSync(senha, 10), usuario_id]]
+        : ['UPDATE usuario SET nome=?, email=? WHERE id=?', [nome, email, usuario_id]];
+    db.query(...atualiza, (err2) => {
+        if (err2) return res.json({ sucesso: false, erro: 'Erro ao atualizar.' });
+        res.json({ sucesso: true });
     });
 });
 
