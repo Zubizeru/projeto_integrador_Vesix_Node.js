@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let erro = false;
 
         erro |= marcarErro(nomeLogin, nomeLogin.value.trim() === '', 'Por favor, informe seu nome.');
-        erro |= marcarErro(senhaLogin, senhaLogin.value.length < 6, 'A senha deve conter no mínimo 6 caracteres.');
+        erro |= marcarErro(senhaLogin, senhaLogin.value.length < 6 || /\s/.test(senhaLogin.value), 'A senha deve conter no mínimo 6 caracteres e não pode ter espaços.');
 
         if (erro) {
             return;
@@ -178,8 +178,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
         erro |= marcarErro(nomeCadastro, nomeCadastro.value.trim() === '', 'Por favor, informe seu nome.');
-        erro |= marcarErro(emailCadastro, !emailRegex.test(emailCadastro.value), 'Por favor, informe um email válido.');
-        erro |= marcarErro(senhaCadastro, senhaCadastro.value.length < 6, 'A senha deve conter no mínimo 6 caracteres.');
+        erro |= marcarErro(emailCadastro, !emailRegex.test(emailCadastro.value) || /\s/.test(emailCadastro.value), 'Por favor, informe um email válido e sem espaços.');
+        erro |= marcarErro(senhaCadastro, senhaCadastro.value.length < 6 || /\s/.test(senhaCadastro.value), 'A senha deve conter no mínimo 6 caracteres e não pode ter espaços.');
         erro |= marcarErro(confirmarSenha, senhaCadastro.value !== confirmarSenha.value, 'As senhas não coincidem.');
 
         if (!erro) {

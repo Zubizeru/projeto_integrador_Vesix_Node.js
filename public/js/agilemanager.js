@@ -1520,7 +1520,7 @@ document.addEventListener('DOMContentLoaded', function () {
         erro += marcarErro(nome, nome.value.trim() === '', 'Informe seu nome.');
         erro += marcarErro(email, !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value) || /\s/.test(email.value), 'Email inválido ou com espaço.');
         if (senha.value || confirmarSenha.value) {
-            erro += marcarErro(senha, senha.value.length < 6, 'A senha deve ter pelo menos 6 caracteres.');
+            erro += marcarErro(senha, senha.value.length < 6 || /\s/.test(senha.value), 'A senha deve ter pelo menos 6 caracteres e não pode ter espaços.');
             erro += marcarErro(confirmarSenha, senha.value !== confirmarSenha.value, 'As senhas não coincidem.');
         } else {
             marcarErro(senha, false, '');
