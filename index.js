@@ -35,12 +35,43 @@ app.use(bodyParser.json());
 // ==============================
 // CONEXÃO COM O BANCO DE DADOS
 // ==============================
-const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '', // sua senha
-    database: 'estoque_vesix'
-});
+
+let db;
+
+try {
+    // Tenta conexão local
+    db = mysql.createConnection({
+        host: 'localhost',
+        user: 'root',
+        password: '', // sua senha local
+        database: 'estoque_vesix'
+    });
+    db.connect((err) => {
+        if (err) {
+            // Se falhar, tenta Railway
+            db = mysql.createConnection({
+                host: process.env.MYSQLHOST,
+                user: process.env.MYSQLUSER,
+                password: process.env.MYSQLPASSWORD,
+                database: process.env.MYSQLDATABASE,
+                port: process.env.MYSQLPORT
+            });
+            db.connect((err2) => {
+                if (err2) {
+                    console.error('Erro ao conectar no banco de dados Railway:', err2);
+                    process.exit(1);
+                } else {
+                    console.log('Conectado ao banco Railway!');
+                }
+            });
+        } else {
+            console.log('Conectado ao banco local!');
+        }
+    });
+} catch (e) {
+    console.error('Erro ao conectar no banco:', e);
+    process.exit(1);
+}
 
 // ==============================
 // ROTAS PRINCIPAIS
