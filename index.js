@@ -67,13 +67,14 @@ db = conectarBanco(dbConfig, (err) => {
 // ==============================
 // SESSÃO COM MYSQL STORE
 // ==============================
-const sessionStore = new MySQLStore({
+const pool = mysql.createPool({
     host: dbConfig.host,
     port: dbConfig.port || 3306,
     user: dbConfig.user,
     password: dbConfig.password,
     database: dbConfig.database
 });
+const sessionStore = new MySQLStore({}, pool);
 
 app.use(session({
     secret: 'seuSegredoSuperSecreto',
