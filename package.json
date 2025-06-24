@@ -1,18 +1,20 @@
 {
-  "name": "06",
+  "name": "sistema-controle-estoque",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon index.js localhost 3000"
+    "start": "node index.js",
+    "dev": "nodemon index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "Sistema de controle de estoque para o Grupo Vesix",
   "dependencies": {
     "bcryptjs": "^3.0.2",
     "chart.js": "^4.5.0",
+    "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "express-handlebars": "^8.0.3",
     "express-session": "^1.18.1",

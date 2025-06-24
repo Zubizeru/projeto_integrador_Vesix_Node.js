@@ -6,6 +6,7 @@ const exphbs = require('express-handlebars');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcryptjs');
 const mysql = require('mysql2');
+require('dotenv').config();
 const app = express();
 const session = require('express-session');
 
@@ -35,11 +36,53 @@ app.use(bodyParser.json());
 // ==============================
 // CONEXÃO COM O BANCO DE DADOS
 // ==============================
-const db = mysql.createConnection({
+
+// Primeira opção: conexão local (nodemon/Express local)
+let dbConfig = {
     host: 'localhost',
     user: 'root',
-    password: '', // sua senha
+    password: '', // sua senha local
     database: 'estoque_vesix'
+};
+
+let db;
+
+// Tenta conectar no banco local primeiro
+function conectarBanco(config, onError) {
+    const conexao = mysql.createConnection(config);
+    conexao.connect(err => {
+        if (err) {
+            if (onError) return onError(err);
+        } else {
+            console.log('Conectado ao banco de dados local!');
+        }
+    });
+    return conexao;
+}
+
+db = conectarBanco(dbConfig, (err) => {
+    // Se falhar, tenta Railway
+    console.warn('Falha ao conectar no banco local, tentando Railway...');
+    if (process.env.DB_HOST && process.env.DB_USER && process.env.DB_PASSWORD && process.env.DB_NAME) {
+        dbConfig = {
+            host: process.env.DB_HOST,
+            port: process.env.DB_PORT || 3306,
+            user: process.env.DB_USER,
+            password: process.env.DB_PASSWORD,
+            database: process.env.DB_NAME
+        };
+        db = conectarBanco(dbConfig, (err2) => {
+            if (err2) {
+                console.error('Falha ao conectar no banco Railway:', err2);
+                process.exit(1);
+            } else {
+                console.log('Conectado ao banco Railway!');
+            }
+        });
+    } else {
+        console.error('Variáveis do Railway não configuradas.');
+        process.exit(1);
+    }
 });
 
 // ==============================
