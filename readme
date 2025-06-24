@@ -1,0 +1,209 @@
+# AgileManager - Sistema de Gestão de Estoque
+
+Este projeto é um sistema web para controle de estoque multi-loja, desenvolvido como Projeto Integrador do **Curso Técnico em Informática** do **Senac São Paulo**.
+
+## 📋 Descrição
+
+O AgileManager permite o cadastro de usuários, gerenciamento de produtos, movimentação de estoque entre lojas, controle de entradas e saídas, além de dashboards com gráficos para análise rápida. O sistema possui níveis de acesso (funcionário, gerente, admin) e fluxo de aprovação de novos usuários.
+
+## 🚀 Como usar
+
+### 1. Pré-requisitos
+
+- Node.js (v16+)
+- MySQL Server
+
+### 2. Instalação
+
+Clone o repositório e instale as dependências:
+
+```
+git clone https://github.com/seu-usuario/seu-repo.git
+cd projeto_integrador_Vesix_Node.js
+npm install
+```
+
+### 3. Configuração do Banco de Dados
+
+Crie o banco de dados e as tabelas necessárias. **Cole o SQL abaixo no seu MySQL**:
+
+````sql
+-- COLE O SCRIPT ABAIXO NO SEU BANCO DE DADOS
+CREATE DATABASE IF NOT EXISTS estoque_vesix;
+USE estoque_vesix;
+
+CREATE TABLE usuario (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    senha VARCHAR(255) NOT NULL,
+    nivel_acesso ENUM('funcionario', 'gerente', 'admin') NOT NULL DEFAULT 'funcionario',
+    ativo BOOLEAN DEFAULT 0
+);
+
+CREATE TABLE loja (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE usuario_loja (
+    usuario_id INT,
+    loja_id INT,
+    PRIMARY KEY (usuario_id, loja_id),
+    FOREIGN KEY (usuario_id) REFERENCES usuario(id) ON DELETE CASCADE,
+    FOREIGN KEY (loja_id) REFERENCES loja(id) ON DELETE CASCADE
+);
+
+CREATE TABLE Produto (
+    id_produto INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    nome VARCHAR(100) NOT NULL,
+    sku VARCHAR(100) NOT NULL UNIQUE,
+    preco_compra DECIMAL(10,2) NOT NULL,
+    fornecedor_nome VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE estoque_loja (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_produto INT NOT NULL,
+    id_loja INT NOT NULL,
+    quantidade INT NOT NULL,
+    preco_venda DECIMAL(10,2) NOT NULL,
+    data_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_produto) REFERENCES Produto(id_produto),
+    FOREIGN KEY (id_loja) REFERENCES loja(id)
+);
+
+CREATE TABLE Historico_Estoque (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    tipo_acao VARCHAR(50) NOT NULL,
+    id_produto INT,
+    id_estoque_loja INT,
+    id_loja_origem INT,
+    id_loja_destino INT,
+    quantidade INT,
+    usuario_id INT,
+    data_acao DATETIME DEFAULT CURRENT_TIMESTAMP,
+    detalhes TEXT,
+    FOREIGN KEY (id_produto) REFERENCES Produto(id_produto) ON DELETE SET NULL,
+    FOREIGN KEY (id_estoque_loja) REFERENCES estoque_loja(id) ON DELETE SET NULL,
+    FOREIGN KEY (id_loja_origem) REFERENCES loja(id),
+    FOREIGN KEY (id_loja_destino) REFERENCES loja(id),
+    FOREIGN KEY (usuario_id) REFERENCES usuario(id)
+);
+
+INSERT INTO loja (nome) VALUES ('Loja Principal'), ('Loja 1'), ('Loja 2');
+
+
+-- Exemplo de usuário root:
+-- Senha: root123
+INSERT INTO usuario (nome, email, senha, ativo, nivel_acesso)
+VALUES (
+    'root',
+    'root@empresa.com',
+    '$2b$10$wQw8Qw8Qw8Qw8Qw8Qw8QwOQw8Qw8Qw8Qw8Qw8Qw8Qw8Qw8Qw8QW',
+    TRUE,
+    'admin'
+);
+
+INSERT INTO usuario_loja (usuario_id, loja_id) VALUES
+(1, 1),
+(1, 2),
+(1, 3);
+
+### 4. Configuração do Servidor
+
+No arquivo [`index.js`](index.js ), ajuste as credenciais do banco de dados conforme seu ambiente:
+
+```js
+const db = mysql.createConnection({
+    host: 'localhost',
+    user: 'root',
+    password: '', // sua senha
+    database: 'estoque_vesix'
+});
+```
+
+### 5. Executando o Projeto
+
+Inicie o servidor:
+
+```
+npm start
+```
+
+Acesse no navegador: [http://localhost:3000](http://localhost:3000)
+
+---
+
+## 👤 Usuários e Fluxo
+
+- **Cadastro:** Novos usuários se cadastram e aguardam aprovação do administrador.
+- **Login:** Após aprovação, podem acessar o sistema conforme o nível de acesso.
+- **Admin:** Aprova usuários, gerencia lojas, produtos e usuários.
+- **Gerente/Funcionário:** Gerenciam produtos e movimentações conforme permissões.
+
+---
+
+## 📊 Funcionalidades
+
+- Cadastro e aprovação de usuários
+- Controle de estoque por loja
+- Entradas, saídas e transferências de produtos
+- Dashboard com gráficos de movimentação, vendas e estoque
+- Histórico detalhado de movimentações
+- Gerenciamento de permissões e lojas por usuário
+
+---
+
+## 📝 Exemplos de Uso
+
+### 1. Cadastro de Produto
+1. Faça login como admin, gerente ou funcionário autorizado.
+2. No menu lateral, clique em "Estoque" ou "Produtos".
+3. Clique em "Adicionar Produto".
+4. Preencha os campos obrigatórios (nome, SKU, preço de compra, fornecedor, etc).
+5. Clique em "Salvar". O produto será cadastrado e poderá ser visualizado na lista.
+
+### 2. Aprovação de Usuário
+1. Faça login como admin.
+2. No menu, acesse "Usuários" ou "Aprovação de Cadastros".
+3. Veja a lista de usuários pendentes.
+4. Clique em "Aprovar" ao lado do usuário desejado.
+5. O usuário receberá permissão para acessar o sistema.
+
+### 3. Movimentação de Estoque (Entrada/Saída/Transferência)
+1. Acesse o menu "Estoque".
+2. Selecione o produto desejado.
+3. Escolha a ação: Entrada, Saída ou Transferência.
+4. Informe a quantidade e, se necessário, a loja de destino.
+5. Confirme a operação. O histórico será atualizado automaticamente.
+
+### 4. Visualizar Dashboard
+1. Faça login e acesse o menu "Dashboard".
+2. Veja gráficos de movimentação, estoque atual e vendas.
+3. Use filtros para visualizar por loja, período ou produto.
+
+### 5. Gerenciar Permissões de Usuário
+1. Apenas admins podem alterar permissões.
+2. No menu "Usuários", selecione o usuário.
+3. Altere o nível de acesso (funcionário, gerente) conforme necessário.
+4. Salve as alterações.
+
+---
+
+## ✍️ Créditos
+
+Projeto Integrador desenvolvido por José Elias Hermínio Mendes e Paulo Henrique Pereira Rosa, alunos do  
+**Curso Técnico em Informática**  
+**Senac São Paulo**
+
+---
+
+## 📄 Licença
+
+Este projeto é acadêmico e de uso livre para fins educacionais.
+
+---
+
+**Dúvidas?**  
+Abra uma issue ou entre em contato!
