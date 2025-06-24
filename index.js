@@ -9,29 +9,7 @@ const mysql = require('mysql2');
 require('dotenv').config();
 const app = express();
 const session = require('express-session');
-
-// ==============================
-// CONFIGURAÇÃO DO SESSION
-// ==============================
-app.use(session({
-    secret: 'seuSegredoSuperSecreto',
-    resave: false,
-    saveUninitialized: false
-}));
-
-// ==============================
-// CONFIGURAÇÃO DO SERVIDOR E VIEW ENGINE
-// ==============================
-app.use(express.static(__dirname + '/public'));
-app.engine('handlebars', exphbs.engine());
-app.set('view engine', 'handlebars');
-app.set('views', __dirname + '/views');
-
-// ==============================
-// MIDDLEWARES
-// ==============================
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
+const MySQLStore = require('express-mysql-session')(session);
 
 // ==============================
 // CONEXÃO COM O BANCO DE DADOS
@@ -47,7 +25,7 @@ let dbConfig = {
 
 let db;
 
-// Tenta conectar no banco local primeiro
+// Função para conectar ao banco
 function conectarBanco(config, onError) {
     const conexao = mysql.createConnection(config);
     conexao.connect(err => {
@@ -60,6 +38,7 @@ function conectarBanco(config, onError) {
     return conexao;
 }
 
+// Tenta conectar no banco local primeiro
 db = conectarBanco(dbConfig, (err) => {
     // Se falhar, tenta Railway
     console.warn('Falha ao conectar no banco local, tentando Railway...');
@@ -84,6 +63,38 @@ db = conectarBanco(dbConfig, (err) => {
         process.exit(1);
     }
 });
+
+// ==============================
+// SESSÃO COM MYSQL STORE
+// ==============================
+const sessionStore = new MySQLStore({
+    host: dbConfig.host,
+    port: dbConfig.port || 3306,
+    user: dbConfig.user,
+    password: dbConfig.password,
+    database: dbConfig.database
+});
+
+app.use(session({
+    secret: 'seuSegredoSuperSecreto',
+    resave: false,
+    saveUninitialized: false,
+    store: sessionStore
+}));
+
+// ==============================
+// CONFIGURAÇÃO DO SERVIDOR E VIEW ENGINE
+// ==============================
+app.use(express.static(__dirname + '/public'));
+app.engine('handlebars', exphbs.engine());
+app.set('view engine', 'handlebars');
+app.set('views', __dirname + '/views');
+
+// ==============================
+// MIDDLEWARES
+// ==============================
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
 // ==============================
 // ROTAS PRINCIPAIS
